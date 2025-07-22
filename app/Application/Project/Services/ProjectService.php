@@ -5,8 +5,6 @@ namespace App\Application\Project\Services;
 use App\Domain\Project\Entities\Project as ProjectEntity;
 use App\Domain\Project\Repositories\ProjectRepositoryInterface;
 use App\Domain\Project\Repositories\ProjectMemberRepositoryInterface;
-use App\Models\Project;
-use App\Models\ProjectMember;
 
 class ProjectService
 {

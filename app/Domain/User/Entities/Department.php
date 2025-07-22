@@ -18,8 +18,10 @@ class Department
         return new self(
             $model->id,
             $model->name,
+            isset($model->manager_id) ? (is_null($model->manager_id) ? null : (int)$model->manager_id) : null,
             $model->created_at?->toDateTimeString(),
             $model->updated_at?->toDateTimeString(),
+            $model->deleted_at?->toDateTimeString(),
         );
     }
 } 

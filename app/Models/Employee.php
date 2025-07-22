@@ -21,4 +21,13 @@ class Employee extends Model
         'phone',
         'address',
     ];
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class, 'department_id');
+    }
+    public function skills()
+    {
+        return $this->belongsToMany(Skill::class, 'employee_skills', 'employee_id', 'skill_id')->withPivot('level');
+    }
 } 

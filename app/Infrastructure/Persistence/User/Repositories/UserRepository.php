@@ -22,7 +22,7 @@ class UserRepository implements UserRepositoryInterface
 
     public function all()
     {
-        return User::all()->map(fn($model) => UserEntity::fromModel($model));
+        return User::with(['employee.department', 'employee.skills'])->get()->map(fn($model) => \App\Domain\User\Entities\User::fromModel($model));
     }
 
     public function find($id): ?UserEntity

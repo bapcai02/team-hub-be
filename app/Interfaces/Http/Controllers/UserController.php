@@ -19,6 +19,7 @@ class UserController
         }
     }
 
+
     public function show($id)
     {
         try {
