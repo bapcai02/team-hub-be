@@ -15,9 +15,13 @@ class Project
         public ?string $created_at = null,
         public ?string $updated_at = null,
         public ?string $deleted_at = null,
+        public ?int $total_tasks = null,
+        public ?int $total_members = null,
+        public ?float $total_amount = null,
+        public ?string $document = null,
     ) {}
 
-    public static function fromModel($model): self
+    public static function fromModel($model, $totalTasks = null, $totalMembers = null): self
     {
         return new self(
             $model->id,
@@ -30,6 +34,10 @@ class Project
             $model->created_at?->toDateTimeString(),
             $model->updated_at?->toDateTimeString(),
             $model->deleted_at?->toDateTimeString(),
+            $totalTasks,
+            $totalMembers,
+            $model->total_amount ?? null,
+            $model->document ?? null,
         );
     }
 } 

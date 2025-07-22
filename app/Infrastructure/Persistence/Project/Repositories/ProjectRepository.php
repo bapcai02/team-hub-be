@@ -28,6 +28,11 @@ class ProjectRepository implements ProjectRepositoryInterface
     public function getByUserId($userId)
     {
         $projectIds = \App\Models\ProjectMember::where('user_id', $userId)->pluck('project_id');
-        return \App\Models\Project::whereIn('id', $projectIds)->get()->map(fn($model) => ProjectEntity::fromModel($model));
+        $projects = \App\Models\Project::whereIn('id', $projectIds)->get();
+        return $projects->map(function($model) {
+            $totalTasks = \App\Models\Task::where('project_id', $model->id)->count();
+            $totalMembers = \App\Models\ProjectMember::where('project_id', $model->id)->count();
+            return \App\Domain\Project\Entities\Project::fromModel($model, $totalTasks, $totalMembers);
+        });
     }
 } 
