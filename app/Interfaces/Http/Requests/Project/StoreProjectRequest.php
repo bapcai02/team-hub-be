@@ -20,6 +20,10 @@ class StoreProjectRequest extends FormRequest
             'start_date' => 'required|date',
             'end_date' => 'nullable|date',
             'status' => 'required|string',
+            'total_amount' => 'nullable|numeric',
+            'document' => 'nullable|file|max:10240', // 10MB
+            'members' => 'nullable|array',
+            'members.*' => 'integer',
         ];
     }
 } 

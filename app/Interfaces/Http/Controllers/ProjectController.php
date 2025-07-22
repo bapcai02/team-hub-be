@@ -14,7 +14,15 @@ class ProjectController
     public function store(StoreProjectRequest $request)
     {
         try {
-            $project = $this->projectService->createProject($request->validated());
+            $data = $request->validated();
+            if ($request->hasFile('document')) {
+                $file = $request->file('document');
+                $path = $file->store('projects');
+                $data['document'] = $path;
+            }
+            $members = $data['members'] ?? [];
+            unset($data['members']);
+            $project = $this->projectService->createProjectWithMembers($data, $members);
             return ApiResponseHelper::responseApi(['project' => $project], 'project_create_success', 201);
         } catch (\Throwable $e) {
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
