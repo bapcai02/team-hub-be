@@ -23,6 +23,14 @@ class AppServiceProvider extends ServiceProvider
             \App\Domain\Project\Repositories\ProjectMemberRepositoryInterface::class,
             \App\Infrastructure\Persistence\Project\Repositories\ProjectMemberRepository::class
         );
+        $this->app->bind(
+            \App\Domain\Chat\Repositories\ConversationRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Chat\Repositories\ConversationRepository::class
+        );
+        $this->app->bind(
+            \App\Domain\Chat\Repositories\MessageRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Chat\Repositories\MessageRepository::class
+        );
         
     }
 
