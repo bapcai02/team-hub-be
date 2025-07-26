@@ -10,4 +10,10 @@ interface UserRepositoryInterface
     public function findByEmail(string $email): ?User;
     public function all();
     public function find($id): ?User;
+    public function update($id, array $data): ?User;
+    public function delete($id): bool;
+    public function getByStatus($status): array;
+    public function getByRole($roleId): array;
+    public function updateLastLogin($id): bool;
+    public function getActiveUsers(): array;
 }

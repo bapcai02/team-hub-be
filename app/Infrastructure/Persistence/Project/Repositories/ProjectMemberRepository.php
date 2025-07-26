@@ -22,4 +22,13 @@ class ProjectMemberRepository implements ProjectMemberRepositoryInterface
     {
         return ProjectMember::where('project_id', $projectId)->pluck('user_id')->toArray();
     }
+
+    public function removeMembersFromProject(int $projectId, array $userIds): bool
+    {
+        $deleted = ProjectMember::where('project_id', $projectId)
+            ->whereIn('user_id', $userIds)
+            ->delete();
+        
+        return $deleted > 0;
+    }
 } 

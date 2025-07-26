@@ -30,4 +30,52 @@ class UserRepository implements UserRepositoryInterface
         $model = User::find($id);
         return $model ? UserEntity::fromModel($model) : null;
     }
+
+    public function update($id, array $data): ?UserEntity
+    {
+        $model = User::find($id);
+        if (!$model) {
+            return null;
+        }
+        $model->update($data);
+        return UserEntity::fromModel($model);
+    }
+
+    public function delete($id): bool
+    {
+        $model = User::find($id);
+        if (!$model) {
+            return false;
+        }
+        $model->delete();
+        return true;
+    }
+
+    public function getByStatus($status): array
+    {
+        $users = User::where('status', $status)->get();
+        return $users->map(fn($model) => UserEntity::fromModel($model))->all();
+    }
+
+    public function getByRole($roleId): array
+    {
+        $users = User::where('role_id', $roleId)->get();
+        return $users->map(fn($model) => UserEntity::fromModel($model))->all();
+    }
+
+    public function updateLastLogin($id): bool
+    {
+        $model = User::find($id);
+        if (!$model) {
+            return false;
+        }
+        $model->update(['last_login_at' => now()]);
+        return true;
+    }
+
+    public function getActiveUsers(): array
+    {
+        $users = User::where('status', 'active')->get();
+        return $users->map(fn($model) => UserEntity::fromModel($model))->all();
+    }
 }

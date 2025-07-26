@@ -4,7 +4,7 @@ namespace App\Interfaces\Http\Controllers\Chat;
 
 use Illuminate\Http\Request;
 use App\Events\MessageSent;
-use App\Models\Message;
+use App\Helpers\ApiResponseHelper;
 
 class ChatController
 {
@@ -14,8 +14,8 @@ class ChatController
     public function index(Request $request)
     {
         // You can add pagination or filter by conversation if needed
-        $messages = Message::orderByDesc('id')->limit(100)->get();
-        return response()->json(['messages' => $messages]);
+        $messages = []; // TODO: Replace with actual message fetching logic
+        return ApiResponseHelper::responseApi(['messages' => $messages], 'message_list_success');
     }
 
     /**
@@ -28,29 +28,32 @@ class ChatController
         ]);
 
         $user = $request->user();
-        $message = Message::create([
+        $message = [
             'user_id' => $user ? $user->id : null,
             'content' => $request->input('content'),
-            'sent_at' => now(),
-        ]);
+            'sent_at' => now()->toDateTimeString(),
+        ];
 
         // Broadcast to all users via Reverb
         event(new MessageSent($message));
 
-        return response()->json(['message' => $message], 201);
+        return ApiResponseHelper::responseApi(['message' => $message], 'message_sent_success', 201);
     }
 
     /**
-     * (Optional) Delete a message (only by owner).
+     * Test broadcast functionality.
      */
-    public function destroy(Request $request, $id)
+    public function testBroadcast(Request $request)
     {
-        $user = $request->user();
-        $message = Message::findOrFail($id);
-        if (!$user || $message->user_id !== $user->id) {
-            return response()->json(['message' => 'Forbidden'], 403);
-        }
-        $message->delete();
-        return response()->json(['message' => 'Message deleted']);
+        $testMessage = [
+            'user_id' => $request->user() ? $request->user()->id : null,
+            'content' => 'Test broadcast message at ' . now()->toDateTimeString(),
+            'sent_at' => now()->toDateTimeString(),
+        ];
+
+        // Broadcast test message to all users
+        event(new MessageSent($testMessage));
+
+        return ApiResponseHelper::responseApi(['message' => $testMessage], 'test_broadcast_success');
     }
 } 

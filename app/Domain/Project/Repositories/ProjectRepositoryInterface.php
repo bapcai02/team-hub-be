@@ -10,4 +10,7 @@ interface ProjectRepositoryInterface
     public function find($id): ?Project;
     public function all();
     public function getByUserId($userId);
+    public function update($id, array $data): ?Project;
+    public function delete($id): bool;
+    public function getProjectStatistics($id): array;
 } 

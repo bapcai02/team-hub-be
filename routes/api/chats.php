@@ -5,7 +5,6 @@ use App\Interfaces\Http\Controllers\Chat\ConversationController;
 use App\Interfaces\Http\Controllers\Chat\MessageController;
 use App\Interfaces\Http\Controllers\Chat\NotificationController;
 use App\Interfaces\Http\Controllers\Chat\FileController;
-use App\Http\Controllers\ChatController;
 
 Route::middleware(['auth:api'])->group(function () {
     // Conversation routes
@@ -32,7 +31,4 @@ Route::middleware(['auth:api'])->group(function () {
     // File/Media
     Route::post('/upload', [FileController::class, 'upload']); // Upload file
     Route::get('/files/{id}', [FileController::class, 'show']); // Lấy file
-
-    // Chat
-    Route::post('/chat/send', [ChatController::class, 'send']);
 });

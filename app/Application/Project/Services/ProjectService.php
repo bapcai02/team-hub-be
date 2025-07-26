@@ -36,4 +36,39 @@ class ProjectService
     {
         return $this->projectRepository->getByUserId($userId);
     }
+
+    public function find($id): ?ProjectEntity
+    {
+        return $this->projectRepository->find($id);
+    }
+
+    public function update($id, array $data): ?ProjectEntity
+    {
+        return $this->projectRepository->update($id, $data);
+    }
+
+    public function delete($id): bool
+    {
+        return $this->projectRepository->delete($id);
+    }
+
+    public function getProjectStatistics($id): array
+    {
+        return $this->projectRepository->getProjectStatistics($id);
+    }
+
+    public function addMembersToProject(int $projectId, array $memberIds, string $role = 'member'): void
+    {
+        $this->projectMemberRepository->addMembersToProject($projectId, $memberIds, $role);
+    }
+
+    public function removeMembersFromProject(int $projectId, array $memberIds): bool
+    {
+        return $this->projectMemberRepository->removeMembersFromProject($projectId, $memberIds);
+    }
+
+    public function getProjectMembers(int $projectId): array
+    {
+        return $this->projectMemberRepository->getMembersByProjectId($projectId);
+    }
 } 

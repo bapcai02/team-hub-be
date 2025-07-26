@@ -24,6 +24,22 @@ class AppServiceProvider extends ServiceProvider
             \App\Infrastructure\Persistence\Project\Repositories\ProjectMemberRepository::class
         );
         $this->app->bind(
+            \App\Domain\Project\Repositories\TaskRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Project\Repositories\TaskRepository::class
+        );
+        $this->app->bind(
+            \App\Domain\Document\Repositories\DocumentRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Document\Repositories\DocumentRepository::class
+        );
+        $this->app->bind(
+            \App\Domain\Project\Repositories\TaskLogRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Project\Repositories\TaskLogRepository::class
+        );
+        $this->app->bind(
+            \App\Domain\Project\Repositories\KanbanColumnRepositoryInterface::class,
+            \App\Infrastructure\Persistence\Project\Repositories\KanbanColumnRepository::class
+        );
+        $this->app->bind(
             \App\Domain\Chat\Repositories\ConversationRepositoryInterface::class,
             \App\Infrastructure\Persistence\Chat\Repositories\ConversationRepository::class
         );
