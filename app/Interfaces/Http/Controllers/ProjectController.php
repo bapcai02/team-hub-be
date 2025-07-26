@@ -53,16 +53,20 @@ class ProjectController
     }
 
     /**
-     * Get project details by ID.
+     * Get project details by ID with members.
      */
     public function show($id)
     {
         try {
-            $project = $this->projectService->find($id);
-            if (!$project) {
+            $projectData = $this->projectService->findWithMembers($id);
+            if (!$projectData) {
                 return ApiResponseHelper::responseApi([], 'project_not_found', 404);
             }
-            return ApiResponseHelper::responseApi(['project' => $project], 'project_get_success');
+            
+            return ApiResponseHelper::responseApi([
+                'project' => $projectData['project'],
+                'members' => $projectData['members']
+            ], 'project_get_success');
         } catch (\Throwable $e) {
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }

@@ -20,7 +20,19 @@ class ProjectMemberRepository implements ProjectMemberRepositoryInterface
 
     public function getMembersByProjectId(int $projectId): array
     {
-        return ProjectMember::where('project_id', $projectId)->pluck('user_id')->toArray();
+        return ProjectMember::where('project_id', $projectId)
+            ->with('user:id,name,email') // Load user information
+            ->get()
+            ->map(function ($member) {
+                return [
+                    'id' => $member->id,
+                    'user_id' => $member->user_id,
+                    'role' => $member->role,
+                    'name' => $member->user->name ?? '',
+                    'email' => $member->user->email ?? '',
+                ];
+            })
+            ->toArray();
     }
 
     public function removeMembersFromProject(int $projectId, array $userIds): bool

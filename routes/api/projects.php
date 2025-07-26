@@ -5,6 +5,8 @@ use App\Interfaces\Http\Controllers\ProjectController;
 use App\Interfaces\Http\Controllers\TaskController;
 use App\Interfaces\Http\Controllers\TaskLogController;
 use App\Interfaces\Http\Controllers\KanbanController;
+use App\Interfaces\Http\Controllers\TaskCommentController;
+use App\Interfaces\Http\Controllers\TaskAttachmentController;
 
 Route::prefix('/projects')->middleware(['auth:api'])->group(function () {
     // Basic CRUD operations
@@ -55,6 +57,30 @@ Route::prefix('/tasks')->middleware(['auth:api'])->group(function () {
         Route::get('/active', [TaskLogController::class, 'getActiveLog']); // Get active time log
         Route::get('/total', [TaskLogController::class, 'getTotalTimeByTask']); // Get total time for task
     });
+
+    // Task comments
+    Route::prefix('/{taskId}/comments')->group(function () {
+        Route::get('/', [TaskCommentController::class, 'index']); // Get task comments
+        Route::post('/', [TaskCommentController::class, 'store']); // Add comment
+    });
+
+    // Task attachments
+    Route::prefix('/{taskId}/attachments')->group(function () {
+        Route::get('/', [TaskAttachmentController::class, 'index']); // Get task attachments
+        Route::post('/', [TaskAttachmentController::class, 'store']); // Upload attachment
+    });
+});
+
+// Global comment routes
+Route::prefix('/comments')->middleware(['auth:api'])->group(function () {
+    Route::patch('/{id}', [TaskCommentController::class, 'update']); // Update comment
+    Route::delete('/{id}', [TaskCommentController::class, 'destroy']); // Delete comment
+});
+
+// Global attachment routes
+Route::prefix('/attachments')->middleware(['auth:api'])->group(function () {
+    Route::get('/{id}/download', [TaskAttachmentController::class, 'download']); // Download attachment
+    Route::delete('/{id}', [TaskAttachmentController::class, 'destroy']); // Delete attachment
 });
 
 // Time tracking routes

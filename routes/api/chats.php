@@ -9,26 +9,26 @@ use App\Interfaces\Http\Controllers\Chat\FileController;
 Route::middleware(['auth:api'])->group(function () {
     // Conversation routes
     Route::prefix('conversations')->group(function () {
-        Route::post('/', [ConversationController::class, 'store']); // Tạo phòng
-        Route::get('/', [ConversationController::class, 'index']); // Danh sách phòng
-        Route::get('/{id}', [ConversationController::class, 'show']); // Chi tiết phòng
-        Route::patch('/{id}', [ConversationController::class, 'update']); // Đổi tên, thêm/xóa thành viên
-        Route::delete('/{id}', [ConversationController::class, 'destroy']); // Rời hoặc xóa phòng
+        Route::post('/', [ConversationController::class, 'store']); // Create a conversation
+        Route::get('/', [ConversationController::class, 'index']); // List conversations
+        Route::get('/{id}', [ConversationController::class, 'show']); // Conversation details
+        Route::patch('/{id}', [ConversationController::class, 'update']); // Rename, add/remove members
+        Route::delete('/{id}', [ConversationController::class, 'destroy']); // Leave or delete a conversation
 
-        // Message routes (theo conversation)
-        Route::get('/{id}/messages', [MessageController::class, 'index']); // Lấy tin nhắn
-        Route::post('/{id}/messages', [MessageController::class, 'store']); // Gửi tin nhắn
+        // Message routes (per conversation)
+        Route::get('/{id}/messages', [MessageController::class, 'index']); // Fetch messages
+        Route::post('/{id}/messages', [MessageController::class, 'store']); // Send a message
     });
 
-    // Message routes (theo message id)
-    Route::patch('/messages/{id}', [MessageController::class, 'update']); // Sửa tin nhắn
-    Route::delete('/messages/{id}', [MessageController::class, 'destroy']); // Xóa tin nhắn
+    // Message routes (by message ID)
+    Route::patch('/messages/{id}', [MessageController::class, 'update']); // Edit a message
+    Route::delete('/messages/{id}', [MessageController::class, 'destroy']); // Delete a message
 
-    // Notification
-    Route::get('/notifications', [NotificationController::class, 'index']); // Danh sách thông báo
-    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']); // Đánh dấu đã đọc
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index']); // List notifications
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']); // Mark as read
 
     // File/Media
-    Route::post('/upload', [FileController::class, 'upload']); // Upload file
-    Route::get('/files/{id}', [FileController::class, 'show']); // Lấy file
+    Route::post('/upload', [FileController::class, 'upload']); // Upload a file
+    Route::get('/files/{id}', [FileController::class, 'show']); // Retrieve a file
 });

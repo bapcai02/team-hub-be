@@ -42,6 +42,21 @@ class ProjectService
         return $this->projectRepository->find($id);
     }
 
+    public function findWithMembers($id): ?array
+    {
+        $project = $this->projectRepository->find($id);
+        if (!$project) {
+            return null;
+        }
+        
+        $members = $this->projectMemberRepository->getMembersByProjectId($id);
+        
+        return [
+            'project' => $project,
+            'members' => $members
+        ];
+    }
+
     public function update($id, array $data): ?ProjectEntity
     {
         return $this->projectRepository->update($id, $data);
