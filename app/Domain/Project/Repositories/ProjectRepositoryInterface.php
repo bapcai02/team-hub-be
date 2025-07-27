@@ -13,4 +13,7 @@ interface ProjectRepositoryInterface
     public function update($id, array $data): ?Project;
     public function delete($id): bool;
     public function getProjectStatistics($id): array;
+    public function getTasks($projectId): array;
+    public function getDocuments($projectId): array;
+    public function getEditHistory($projectId): array;
 } 

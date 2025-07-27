@@ -38,7 +38,6 @@ class AuthController
                 'access_token' => $token,
             ], 'login_success');
         } catch (\Throwable $e) {
-            dd($e);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

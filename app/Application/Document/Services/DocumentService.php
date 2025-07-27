@@ -50,4 +50,9 @@ class DocumentService
     {
         return $this->documentRepository->getRootDocuments();
     }
+
+    public function getByProjectId($projectId): array
+    {
+        return $this->documentRepository->getByProjectId($projectId);
+    }
 } 

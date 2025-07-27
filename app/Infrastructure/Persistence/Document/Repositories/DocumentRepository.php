@@ -63,4 +63,9 @@ class DocumentRepository implements DocumentRepositoryInterface
         $documents = DocumentModel::whereNull('parent_id')->get();
         return $documents->map(fn($model) => Document::fromModel($model))->all();
     }
+
+    public function getByProjectId($projectId): array
+    {
+        return \App\Models\Document::where('project_id', $projectId)->get()->toArray();
+    }
 } 

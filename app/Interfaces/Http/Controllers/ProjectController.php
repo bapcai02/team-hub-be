@@ -62,13 +62,15 @@ class ProjectController
             if (!$projectData) {
                 return ApiResponseHelper::responseApi([], 'project_not_found', 404);
             }
-            
             return ApiResponseHelper::responseApi([
                 'project' => $projectData['project'],
-                'members' => $projectData['members']
+                'members' => $projectData['members'],
+                'tasks' => $projectData['tasks'],
+                'documents' => $projectData['documents'],
+                'edit_history' => $projectData['edit_history'],
             ], 'project_get_success');
         } catch (\Throwable $e) {
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+            return ApiResponseHelper::responseApi([], $e->getMessage(), 500);
         }
     }
 

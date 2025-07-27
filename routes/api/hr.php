@@ -22,19 +22,14 @@ Route::prefix('/attendance')->middleware(['auth:api'])->group(function () {
 });
 
 // Leave management routes
-Route::prefix('/leaves')->middleware(['auth:api'])->group(function () {
-    // Employee leave actions
-    Route::get('/', [LeaveController::class, 'index']); // Get my leave requests
-    Route::post('/', [LeaveController::class, 'store']); // Create leave request
-    Route::get('/{id}', [LeaveController::class, 'show']); // Get leave details
-    Route::patch('/{id}', [LeaveController::class, 'update']); // Update leave request
-    Route::post('/{id}/cancel', [LeaveController::class, 'cancel']); // Cancel leave request
-    
-    // Employee leave queries
-    Route::get('/balance/me', [LeaveController::class, 'getBalance']); // Get my leave balance
-    
-    // Admin leave management
-    Route::get('/admin/all', [LeaveController::class, 'getAllLeaves']); // Get all leave requests
-    Route::post('/{id}/approve', [LeaveController::class, 'approve']); // Approve/reject leave
-    Route::get('/admin/calendar', [LeaveController::class, 'getCalendar']); // Get leave calendar
+Route::middleware('auth:api')->group(function () {
+    Route::get('/leaves', [LeaveController::class, 'index']);
+    Route::post('/leaves', [LeaveController::class, 'store']);
+    Route::get('/leaves/{id}', [LeaveController::class, 'show']);
+    Route::put('/leaves/{id}', [LeaveController::class, 'update']);
+    Route::post('/leaves/{id}/cancel', [LeaveController::class, 'cancel']);
+    Route::get('/leaves/all', [LeaveController::class, 'getAllLeaves']);
+    Route::post('/leaves/{id}/approve', [LeaveController::class, 'approve']);
+    Route::get('/leaves/balance', [LeaveController::class, 'getBalance']);
+    Route::get('/leaves/calendar', [LeaveController::class, 'getCalendar']);
 });

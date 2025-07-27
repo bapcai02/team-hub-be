@@ -48,12 +48,16 @@ class ProjectService
         if (!$project) {
             return null;
         }
-        
         $members = $this->projectMemberRepository->getMembersByProjectId($id);
-        
+        $tasks = $this->projectRepository->getTasks($id);
+        $documents = $this->projectRepository->getDocuments($id);
+        $editHistory = $this->projectRepository->getEditHistory($id);
         return [
             'project' => $project,
-            'members' => $members
+            'members' => $members,
+            'tasks' => $tasks,
+            'documents' => $documents,
+            'edit_history' => $editHistory,
         ];
     }
 

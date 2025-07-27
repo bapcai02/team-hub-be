@@ -14,4 +14,5 @@ interface DocumentRepositoryInterface
     public function delete($id): bool;
     public function getChildren($parentId): array;
     public function getRootDocuments(): array;
+    public function getByProjectId($projectId): array;
 } 

@@ -81,4 +81,19 @@ class ProjectRepository implements ProjectRepositoryInterface
             'days_remaining' => $project->end_date ? now()->diffInDays($project->end_date, false) : 0,
         ];
     }
+
+    public function getTasks($projectId): array
+    {
+        return \App\Models\Task::where('project_id', $projectId)->get()->toArray();
+    }
+
+    public function getDocuments($projectId): array
+    {
+        return \App\Models\Document::where('project_id', $projectId)->get()->toArray();
+    }
+
+    public function getEditHistory($projectId): array
+    {
+        return \App\Models\ProjectEditHistory::where('project_id', $projectId)->orderBy('created_at', 'desc')->get()->toArray();
+    }
 } 
