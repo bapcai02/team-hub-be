@@ -7,6 +7,7 @@ use App\Application\Chat\Services\ConversationService;
 use App\Helpers\ApiResponseHelper;
 use App\Interfaces\Http\Requests\Chat\StoreConversationRequest;
 use App\Interfaces\Http\Requests\Chat\UpdateConversationRequest;
+use Illuminate\Support\Facades\Log;
 
 class ConversationController
 {
@@ -19,6 +20,7 @@ class ConversationController
             $conversations = $this->conversationService->getByUserId($userId);
             return ApiResponseHelper::responseApi(['conversations' => $conversations], 'conversation_list_success');
         } catch (\Throwable $e) {
+            Log::error('ConversationController::index - Error getting conversations', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -44,6 +46,7 @@ class ConversationController
             $conversation = $this->conversationService->create($data);
             return ApiResponseHelper::responseApi(['conversation' => $conversation], 'conversation_create_success', 201);
         } catch (\Throwable $e) {
+            Log::error('ConversationController::store - Error creating conversation', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -59,6 +62,7 @@ class ConversationController
             // TODO: kiểm tra user có phải thành viên không
             return ApiResponseHelper::responseApi(['conversation' => $conversation], 'conversation_get_success');
         } catch (\Throwable $e) {
+            Log::error('ConversationController::show - Error getting conversation details', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -72,6 +76,7 @@ class ConversationController
             $conversation = $this->conversationService->update($id, $data);
             return ApiResponseHelper::responseApi(['conversation' => $conversation], 'conversation_update_success');
         } catch (\Throwable $e) {
+            Log::error('ConversationController::update - Error updating conversation', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -87,6 +92,7 @@ class ConversationController
             }
             return ApiResponseHelper::responseApi([], 'conversation_delete_success');
         } catch (\Throwable $e) {
+            Log::error('ConversationController::destroy - Error deleting conversation', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

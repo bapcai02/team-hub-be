@@ -4,6 +4,7 @@ namespace App\Interfaces\Http\Controllers\Chat;
 
 use Illuminate\Http\Request;
 use App\Interfaces\Http\Requests\Chat\ReadNotificationRequest;
+use Illuminate\Support\Facades\Log;
 
 class NotificationController
 {

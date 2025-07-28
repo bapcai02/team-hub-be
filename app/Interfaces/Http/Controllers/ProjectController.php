@@ -9,6 +9,7 @@ use App\Interfaces\Http\Requests\Project\UpdateProjectRequest;
 use App\Interfaces\Http\Requests\Project\AddMembersRequest;
 use App\Interfaces\Http\Requests\Project\RemoveMembersRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class ProjectController
 {
@@ -31,6 +32,7 @@ class ProjectController
             $project = $this->projectService->createProjectWithMembers($data, $members);
             return ApiResponseHelper::responseApi(['project' => $project], 'project_create_success', 201);
         } catch (\Throwable $e) {
+            Log::error('ProjectController::store - Error creating project', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -48,6 +50,7 @@ class ProjectController
             $projects = $this->projectService->getProjectsByUserId($userId);
             return ApiResponseHelper::responseApi(['projects' => $projects], 'project_list_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::index - Error getting projects', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -70,6 +73,7 @@ class ProjectController
                 'edit_history' => $projectData['edit_history'],
             ], 'project_get_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::show - Error getting project details', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], $e->getMessage(), 500);
         }
     }
@@ -93,6 +97,7 @@ class ProjectController
             }
             return ApiResponseHelper::responseApi(['project' => $project], 'project_update_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::update - Error updating project', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -109,6 +114,7 @@ class ProjectController
             }
             return ApiResponseHelper::responseApi([], 'project_delete_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::destroy - Error deleting project', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -122,6 +128,7 @@ class ProjectController
             $stats = $this->projectService->getProjectStatistics($id);
             return ApiResponseHelper::responseApi(['statistics' => $stats], 'project_statistics_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::statistics - Error getting project statistics', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -139,6 +146,7 @@ class ProjectController
             $this->projectService->addMembersToProject($id, $memberIds, $role);
             return ApiResponseHelper::responseApi([], 'project_members_added_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::addMembers - Error adding members to project', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -155,6 +163,7 @@ class ProjectController
             $this->projectService->removeMembersFromProject($id, $memberIds);
             return ApiResponseHelper::responseApi([], 'project_members_removed_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::removeMembers - Error removing members from project', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -168,6 +177,7 @@ class ProjectController
             $members = $this->projectService->getProjectMembers($id);
             return ApiResponseHelper::responseApi(['members' => $members], 'project_members_success');
         } catch (\Throwable $e) {
+            Log::error('ProjectController::members - Error getting project members', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

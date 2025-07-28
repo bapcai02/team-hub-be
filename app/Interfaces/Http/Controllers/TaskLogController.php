@@ -7,6 +7,7 @@ use App\Application\Project\Services\TaskLogService;
 use App\Interfaces\Http\Requests\Project\StartTimeRequest;
 use App\Interfaces\Http\Requests\Project\StopTimeRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TaskLogController
 {
@@ -29,8 +30,10 @@ class TaskLogController
             
             return ApiResponseHelper::responseApi(['task_log' => $taskLog], 'time_start_success');
         } catch (\Exception $e) {
+            Log::error('TaskLogController::startTime - Error starting time tracking', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], $e->getMessage(), 400);
         } catch (\Throwable $e) {
+            Log::error('TaskLogController::startTime - Error starting time tracking', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use App\Interfaces\Http\Requests\Chat\UploadFileRequest;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
 
 class FileController
 {

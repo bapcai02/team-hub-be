@@ -7,6 +7,7 @@ use App\Application\Project\Services\TaskAttachmentService;
 use App\Interfaces\Http\Requests\Project\StoreTaskAttachmentRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class TaskAttachmentController
 {
@@ -21,6 +22,7 @@ class TaskAttachmentController
             $attachments = $this->taskAttachmentService->getByTaskId($taskId);
             return ApiResponseHelper::responseApi(['attachments' => $attachments], 'task_attachments_success');
         } catch (\Throwable $e) {
+            Log::error('TaskAttachmentController::index - Error getting task attachments', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -53,6 +55,7 @@ class TaskAttachmentController
             
             return ApiResponseHelper::responseApi([], 'file_required', 400);
         } catch (\Throwable $e) {
+            Log::error('TaskAttachmentController::store - Error creating task attachment', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -74,6 +77,7 @@ class TaskAttachmentController
             
             return Storage::download($attachment->file_path, $attachment->original_name ?? 'attachment');
         } catch (\Throwable $e) {
+            Log::error('TaskAttachmentController::download - Error downloading task attachment', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -101,6 +105,7 @@ class TaskAttachmentController
             
             return ApiResponseHelper::responseApi([], 'task_attachment_delete_success');
         } catch (\Throwable $e) {
+            Log::error('TaskAttachmentController::destroy - Error deleting task attachment', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

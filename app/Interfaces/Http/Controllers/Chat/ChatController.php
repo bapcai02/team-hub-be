@@ -5,6 +5,7 @@ namespace App\Interfaces\Http\Controllers\Chat;
 use Illuminate\Http\Request;
 use App\Events\MessageSent;
 use App\Helpers\ApiResponseHelper;
+use Illuminate\Support\Facades\Log;
 
 class ChatController
 {

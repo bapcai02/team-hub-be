@@ -8,6 +8,7 @@ use App\Interfaces\Http\Requests\Project\StoreKanbanColumnRequest;
 use App\Interfaces\Http\Requests\Project\UpdateKanbanColumnRequest;
 use App\Interfaces\Http\Requests\Project\ReorderKanbanColumnsRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class KanbanController
 {
@@ -22,6 +23,7 @@ class KanbanController
             $columns = $this->kanbanService->getColumnsByProject($projectId);
             return ApiResponseHelper::responseApi(['columns' => $columns], 'kanban_board_success');
         } catch (\Throwable $e) {
+            Log::error('KanbanController::getBoard - Error getting kanban board', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -101,6 +103,24 @@ class KanbanController
             $columns = $this->kanbanService->initializeDefaultColumns($projectId);
             return ApiResponseHelper::responseApi(['columns' => $columns], 'kanban_default_columns_success', 201);
         } catch (\Throwable $e) {
+            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+        }
+    }
+
+    /**
+     * Get project tasks for kanban board.
+     */
+    public function getProjectTasks($projectId)
+    {
+        try {
+            if (!$projectId) {
+                return ApiResponseHelper::responseApi([], 'project_id_required', 400);
+            }
+            
+            $tasks = $this->kanbanService->getProjectTasks($projectId);
+            return ApiResponseHelper::responseApi(['tasks' => $tasks], 'project_tasks_success');
+        } catch (\Throwable $e) {
+            Log::error('KanbanController::getProjectTasks - Error getting project tasks', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

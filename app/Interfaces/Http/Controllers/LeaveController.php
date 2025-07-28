@@ -8,6 +8,7 @@ use App\Interfaces\Http\Requests\User\StoreLeaveRequest;
 use App\Interfaces\Http\Requests\User\UpdateLeaveRequest;
 use App\Interfaces\Http\Requests\User\ApproveLeaveRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class LeaveController
 {
@@ -28,6 +29,7 @@ class LeaveController
             $leaves = $this->leaveService->getByEmployeeId($employeeId);
             return ApiResponseHelper::responseApi(['leaves' => $leaves], 'leave_list_success');
         } catch (\Throwable $e) {
+            Log::error('LeaveController::index - Error getting leave requests', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

@@ -7,6 +7,7 @@ use App\Application\Chat\Services\MessageService;
 use App\Helpers\ApiResponseHelper;
 use App\Interfaces\Http\Requests\Chat\StoreMessageRequest;
 use App\Interfaces\Http\Requests\Chat\UpdateMessageRequest;
+use Illuminate\Support\Facades\Log;
 
 class MessageController
 {
@@ -20,6 +21,7 @@ class MessageController
             $messages = $this->messageService->getByConversationId($conversationId, $before, $limit);
             return ApiResponseHelper::responseApi(['messages' => $messages], 'message_list_success');
         } catch (\Throwable $e) {
+            Log::error('MessageController::index - Error getting messages', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -34,6 +36,7 @@ class MessageController
             $message = $this->messageService->create($data);
             return ApiResponseHelper::responseApi(['message' => $message], 'message_create_success', 201);
         } catch (\Throwable $e) {
+            Log::error('MessageController::store - Error creating message', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -46,6 +49,7 @@ class MessageController
             $message = $this->messageService->update($id, $data);
             return ApiResponseHelper::responseApi(['message' => $message], 'message_update_success');
         } catch (\Throwable $e) {
+            Log::error('MessageController::update - Error updating message', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -60,6 +64,7 @@ class MessageController
             }
             return ApiResponseHelper::responseApi([], 'message_delete_success');
         } catch (\Throwable $e) {
+            Log::error('MessageController::destroy - Error deleting message', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

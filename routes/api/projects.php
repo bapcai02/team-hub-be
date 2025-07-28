@@ -31,14 +31,26 @@ Route::prefix('/projects')->middleware(['auth:api'])->group(function () {
         Route::get('/by-status', [TaskController::class, 'getByStatus']); // Get tasks by status
     });
 
-    // Kanban board management
-    Route::prefix('/{projectId}/kanban')->group(function () {
-        Route::get('/board', [KanbanController::class, 'getBoard']); // Get kanban board
-        Route::post('/columns', [KanbanController::class, 'createColumn']); // Create column
-        Route::patch('/columns/{id}', [KanbanController::class, 'updateColumn']); // Update column
-        Route::delete('/columns/{id}', [KanbanController::class, 'deleteColumn']); // Delete column
-        Route::post('/reorder', [KanbanController::class, 'reorderColumns']); // Reorder columns
-        Route::post('/initialize', [KanbanController::class, 'initializeDefaultColumns']); // Initialize default columns
+    // Kanban board management - Move outside the group to avoid conflicts
+    Route::get('/{projectId}/kanban/board', [KanbanController::class, 'getBoard']); // Get kanban board
+    Route::get('/{projectId}/kanban/tasks', [KanbanController::class, 'getProjectTasks']); // Get project tasks for kanban
+    Route::post('/{projectId}/kanban/columns', [KanbanController::class, 'createColumn']); // Create column
+    Route::patch('/{projectId}/kanban/columns/{columnId}', [KanbanController::class, 'updateColumn']); // Update column
+    Route::delete('/{projectId}/kanban/columns/{columnId}', [KanbanController::class, 'deleteColumn']); // Delete column
+    Route::post('/{projectId}/kanban/reorder', [KanbanController::class, 'reorderColumns']); // Reorder columns
+    Route::post('/{projectId}/kanban/initialize', [KanbanController::class, 'initializeDefaultColumns']); // Initialize default columns
+
+    // Test route for kanban tasks
+    Route::get('/{projectId}/kanban-tasks', [KanbanController::class, 'getProjectTasks']); // Test route
+    
+    // Simple test route
+    Route::get('/{projectId}/test', function($projectId) {
+        return response()->json(['message' => 'Test route works', 'projectId' => $projectId]);
+    });
+    
+    // Test kanban route
+    Route::get('/{projectId}/kanban-test', function($projectId) {
+        return response()->json(['message' => 'Kanban test route works', 'projectId' => $projectId]);
     });
 });
 

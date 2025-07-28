@@ -19,4 +19,19 @@ class Task extends Model
         'deadline',
         'created_by',
     ];
+
+    public function assignedUser()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function createdByUser()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function project()
+    {
+        return $this->belongsTo(\App\Models\Project::class, 'project_id');
+    }
 } 

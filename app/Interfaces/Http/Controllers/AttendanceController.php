@@ -9,6 +9,7 @@ use App\Interfaces\Http\Requests\User\CheckOutRequest;
 use App\Interfaces\Http\Requests\User\BreakRequest;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class AttendanceController
 {
@@ -33,8 +34,10 @@ class AttendanceController
             $attendance = $this->attendanceService->checkIn($data);
             return ApiResponseHelper::responseApi(['attendance' => $attendance], 'check_in_success', 201);
         } catch (\Exception $e) {
+            Log::error('AttendanceController::checkIn - Error during check in', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], $e->getMessage(), 400);
         } catch (\Throwable $e) {
+            Log::error('AttendanceController::checkIn - Error during check in', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

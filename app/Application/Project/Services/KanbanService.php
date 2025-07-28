@@ -45,4 +45,12 @@ class KanbanService
     {
         return $this->kanbanColumnRepository->getDefaultColumns($projectId);
     }
+
+    public function getProjectTasks($projectId): array
+    {
+        return \App\Models\Task::where('project_id', $projectId)
+            ->with(['assignedUser', 'createdByUser'])
+            ->get()
+            ->toArray();
+    }
 } 

@@ -8,6 +8,7 @@ use App\Interfaces\Http\Requests\Project\StoreTaskTagRequest;
 use App\Interfaces\Http\Requests\Project\UpdateTaskTagRequest;
 use App\Interfaces\Http\Requests\Project\AssignTaskTagRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class TaskTagController
 {
@@ -22,6 +23,7 @@ class TaskTagController
             $tags = $this->taskTagService->getAll();
             return ApiResponseHelper::responseApi(['tags' => $tags], 'task_tags_success');
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::index - Error getting task tags', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -36,6 +38,7 @@ class TaskTagController
             $tag = $this->taskTagService->create($data);
             return ApiResponseHelper::responseApi(['tag' => $tag], 'task_tag_create_success', 201);
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::store - Error creating task tag', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -52,6 +55,7 @@ class TaskTagController
             }
             return ApiResponseHelper::responseApi(['tag' => $tag], 'task_tag_success');
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::show - Error getting task tag details', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -70,6 +74,7 @@ class TaskTagController
             }
             return ApiResponseHelper::responseApi(['tag' => $tag], 'task_tag_update_success');
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::update - Error updating task tag', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -86,6 +91,7 @@ class TaskTagController
             }
             return ApiResponseHelper::responseApi([], 'task_tag_delete_success');
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::destroy - Error deleting task tag', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -99,6 +105,7 @@ class TaskTagController
             $tags = $this->taskTagService->getByTaskId($taskId);
             return ApiResponseHelper::responseApi(['tags' => $tags], 'task_tags_success');
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::getTaskTags - Error getting task tags', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -113,6 +120,7 @@ class TaskTagController
             $this->taskTagService->assignToTask($taskId, $data['tag_ids']);
             return ApiResponseHelper::responseApi([], 'task_tags_assigned_success');
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::assignToTask - Error assigning tags to task', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -127,6 +135,7 @@ class TaskTagController
             $this->taskTagService->removeFromTask($taskId, $tagIds);
             return ApiResponseHelper::responseApi([], 'task_tags_removed_success');
         } catch (\Throwable $e) {
+            Log::error('TaskTagController::removeFromTask - Error removing tags from task', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

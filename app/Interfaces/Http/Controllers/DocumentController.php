@@ -7,6 +7,7 @@ use App\Application\Document\Services\DocumentService;
 use App\Interfaces\Http\Requests\Document\StoreDocumentRequest;
 use App\Interfaces\Http\Requests\Document\UpdateDocumentRequest;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class DocumentController
 {
@@ -24,6 +25,7 @@ class DocumentController
             $document = $this->documentService->create($data);
             return ApiResponseHelper::responseApi(['document' => $document], 'document_create_success', 201);
         } catch (\Throwable $e) {
+            Log::error('DocumentController::store - Error creating document', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -38,6 +40,7 @@ class DocumentController
             $documents = $this->documentService->getByUserId($userId);
             return ApiResponseHelper::responseApi(['documents' => $documents], 'document_list_success');
         } catch (\Throwable $e) {
+            Log::error('DocumentController::index - Error getting documents for user', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -54,6 +57,7 @@ class DocumentController
             }
             return ApiResponseHelper::responseApi(['document' => $document], 'document_get_success');
         } catch (\Throwable $e) {
+            Log::error('DocumentController::show - Error getting document details', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -72,6 +76,7 @@ class DocumentController
             }
             return ApiResponseHelper::responseApi(['document' => $document], 'document_update_success');
         } catch (\Throwable $e) {
+            Log::error('DocumentController::update - Error updating document', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -88,6 +93,7 @@ class DocumentController
             }
             return ApiResponseHelper::responseApi([], 'document_delete_success');
         } catch (\Throwable $e) {
+            Log::error('DocumentController::destroy - Error deleting document', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -106,6 +112,7 @@ class DocumentController
             $documents = $this->documentService->getByVisibility($visibility);
             return ApiResponseHelper::responseApi(['documents' => $documents], 'document_visibility_success');
         } catch (\Throwable $e) {
+            Log::error('DocumentController::getByVisibility - Error getting documents by visibility', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -119,6 +126,7 @@ class DocumentController
             $documents = $this->documentService->getRootDocuments();
             return ApiResponseHelper::responseApi(['documents' => $documents], 'document_root_success');
         } catch (\Throwable $e) {
+            Log::error('DocumentController::getRootDocuments - Error getting root documents', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -132,6 +140,7 @@ class DocumentController
             $documents = $this->documentService->getChildren($parentId);
             return ApiResponseHelper::responseApi(['documents' => $documents], 'document_children_success');
         } catch (\Throwable $e) {
+            Log::error('DocumentController::getChildren - Error getting child documents', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }

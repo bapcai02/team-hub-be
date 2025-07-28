@@ -8,6 +8,7 @@ use App\Interfaces\Http\Requests\Auth\ResetPasswordRequest;
 use App\Helpers\ApiResponseHelper;
 use App\Application\User\Services\AuthService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class AuthController
 {
@@ -21,6 +22,7 @@ class AuthController
                 'user' => $user,
             ], 'register_success', 201);
         } catch (\Throwable $e) {
+            Log::error('AuthController::register - Error during registration', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -38,6 +40,7 @@ class AuthController
                 'access_token' => $token,
             ], 'login_success');
         } catch (\Throwable $e) {
+            Log::error('AuthController::login - Error during login', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -51,6 +54,7 @@ class AuthController
             }
             return ApiResponseHelper::responseApi([], 'reset_success');
         } catch (\Throwable $e) {
+            Log::error('AuthController::resetPassword - Error during password reset', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
@@ -64,6 +68,7 @@ class AuthController
             }
             return ApiResponseHelper::responseApi([], 'logout_success');
         } catch (\Throwable $e) {
+            Log::error('AuthController::logout - Error during logout', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
