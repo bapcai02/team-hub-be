@@ -4,6 +4,7 @@ namespace App\Infrastructure\Persistence\User\Repositories;
 
 use App\Domain\User\Repositories\LeaveRepositoryInterface;
 use App\Models\Leave;
+use Illuminate\Support\Facades\DB;
 
 class LeaveRepository implements LeaveRepositoryInterface
 {
@@ -116,5 +117,39 @@ class LeaveRepository implements LeaveRepositoryInterface
             });
         }
         return $query->get()->toArray();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getLeaveStats(): array
+    {
+        $totalLeaves = Leave::count();
+        $pendingLeaves = Leave::where('status', 'pending')->count();
+        $approvedLeaves = Leave::where('status', 'approved')->count();
+        $rejectedLeaves = Leave::where('status', 'rejected')->count();
+        $cancelledLeaves = Leave::where('status', 'cancelled')->count();
+
+        // Department stats
+        $departmentStats = Leave::join('employees', 'leaves.employee_id', '=', 'employees.id')
+            ->join('departments', 'employees.department_id', '=', 'departments.id')
+            ->select('departments.name as department', DB::raw('count(*) as count'))
+            ->groupBy('departments.name')
+            ->get();
+
+        // Leave type stats
+        $typeStats = Leave::select('type', DB::raw('count(*) as count'))
+            ->groupBy('type')
+            ->get();
+
+        return [
+            'total' => $totalLeaves,
+            'pending' => $pendingLeaves,
+            'approved' => $approvedLeaves,
+            'rejected' => $rejectedLeaves,
+            'cancelled' => $cancelledLeaves,
+            'departments' => $departmentStats,
+            'types' => $typeStats,
+        ];
     }
 } 

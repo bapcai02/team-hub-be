@@ -3,25 +3,74 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use App\Models\Leave;
-use App\Models\Employee;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class LeavesTableSeeder extends Seeder
 {
-    public function run()
+    /**
+     * Run the database seeds.
+     */
+    public function run(): void
     {
-        $employeeIds = Employee::pluck('id')->all();
-        $types = ['paid', 'unpaid', 'sick', 'remote', 'comp-off'];
-        $statuses = ['pending', 'approved', 'rejected'];
-        for ($i = 1; $i <= 10; $i++) {
-            Leave::create([
-                'employee_id' => $employeeIds[array_rand($employeeIds)],
-                'type' => $types[array_rand($types)],
-                'date_from' => now()->subDays(rand(1, 30)),
-                'date_to' => now()->addDays(rand(1, 10)),
-                'reason' => 'Nghỉ phép mẫu ' . $i,
-                'status' => $statuses[array_rand($statuses)],
-            ]);
-        }
+        $leaves = [
+            [
+                'employee_id' => 1,
+                'type' => 'annual',
+                'date_from' => '2024-01-15',
+                'date_to' => '2024-01-17',
+                'reason' => 'Nghỉ phép năm',
+                'status' => 'approved',
+                'approved_by' => 1,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'employee_id' => 2,
+                'type' => 'sick',
+                'date_from' => '2024-01-20',
+                'date_to' => '2024-01-21',
+                'reason' => 'Ốm, cần nghỉ ngơi',
+                'status' => 'approved',
+                'approved_by' => 1,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'employee_id' => 3,
+                'type' => 'personal',
+                'date_from' => '2024-02-01',
+                'date_to' => '2024-02-01',
+                'reason' => 'Việc riêng',
+                'status' => 'pending',
+                'approved_by' => null,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'employee_id' => 4,
+                'type' => 'annual',
+                'date_from' => '2024-02-10',
+                'date_to' => '2024-02-12',
+                'reason' => 'Nghỉ phép năm',
+                'status' => 'rejected',
+                'approved_by' => 1,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+            [
+                'employee_id' => 5,
+                'type' => 'sick',
+                'date_from' => '2024-02-15',
+                'date_to' => '2024-02-16',
+                'reason' => 'Ốm, cần nghỉ ngơi',
+                'status' => 'approved',
+                'approved_by' => 1,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now(),
+            ],
+        ];
+
+        DB::table('leaves')->insert($leaves);
     }
 } 

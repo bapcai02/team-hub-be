@@ -77,4 +77,10 @@ interface LeaveRepositoryInterface
      * @return array
      */
     public function getLeaveCalendar($month, $year, $departmentId = null): array;
+
+    /**
+     * Get leave statistics.
+     * @return array
+     */
+    public function getLeaveStats(): array;
 } 

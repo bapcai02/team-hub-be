@@ -20,7 +20,7 @@ class User
     public static function fromModel($model): self
     {
         $employee = $model->employee ? 
-            \App\Domain\User\Entities\Employee::fromModel($model->employee) : null;
+            \App\Domain\User\Entities\EmployeeEntity::fromModel($model->employee) : null;
         return new self(
             $model->id,
             $model->name,

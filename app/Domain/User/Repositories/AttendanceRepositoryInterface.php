@@ -14,4 +14,19 @@ interface AttendanceRepositoryInterface
     public function getAttendanceByDateRange(int $employeeId, string $startDate, string $endDate): array;
     public function getAttendanceByMonth(int $employeeId, int $month, int $year): array;
     public function getAllAttendanceByDate(string $date): array;
+    
+    /**
+     * Get all attendance records with filters.
+     */
+    public function getAllAttendances(array $filters = []): array;
+    
+    /**
+     * Get attendance statistics.
+     */
+    public function getAttendanceStats(): array;
+    
+    /**
+     * Get attendance by employee and date.
+     */
+    public function getAttendanceByEmployeeAndDate(int $employeeId, string $date): ?Attendance;
 }

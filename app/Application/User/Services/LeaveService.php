@@ -116,4 +116,28 @@ class LeaveService
     {
         return $this->leaveRepository->getLeaveCalendar($month, $year, $departmentId);
     }
+
+    /**
+     * Reject a leave request.
+     *
+     * @param int|string $id
+     * @param array $data
+     * @return mixed
+     */
+    public function reject($id, array $data)
+    {
+        $data['status'] = 'rejected';
+        $data['rejected_at'] = now();
+        return $this->leaveRepository->update($id, $data);
+    }
+
+    /**
+     * Get leave statistics.
+     *
+     * @return array
+     */
+    public function getLeaveStats(): array
+    {
+        return $this->leaveRepository->getLeaveStats();
+    }
 } 

@@ -151,6 +151,37 @@ class LeaveController
     }
 
     /**
+     * Reject leave request.
+     */
+    public function reject(Request $request, $id)
+    {
+        try {
+            $leave = $this->leaveService->reject($id, $request->all());
+            return ApiResponseHelper::responseApi(['leave' => $leave], 'leave_rejected_success');
+        } catch (\Exception $e) {
+            Log::error('LeaveController::reject - Error rejecting leave', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ApiResponseHelper::responseApi([], $e->getMessage(), 400);
+        } catch (\Throwable $e) {
+            Log::error('LeaveController::reject - Error rejecting leave', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+        }
+    }
+
+    /**
+     * Get leave statistics.
+     */
+    public function getLeaveStats()
+    {
+        try {
+            $stats = $this->leaveService->getLeaveStats();
+            return ApiResponseHelper::responseApi(['stats' => $stats], 'leave_stats_success');
+        } catch (\Throwable $e) {
+            Log::error('LeaveController::getLeaveStats - Error getting leave stats', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+        }
+    }
+
+    /**
      * Get leave balance for current user.
      */
     public function getBalance(Request $request)

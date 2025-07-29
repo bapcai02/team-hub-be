@@ -47,7 +47,20 @@ class AppServiceProvider extends ServiceProvider
             \App\Domain\Chat\Repositories\MessageRepositoryInterface::class,
             \App\Infrastructure\Persistence\Chat\Repositories\MessageRepository::class
         );
+        $this->app->bind(
+            \App\Domain\User\Repositories\EmployeeRepositoryInterface::class,
+            \App\Infrastructure\Repositories\EmployeeRepository::class
+        );
         
+        $this->app->bind(
+            \App\Domain\User\Repositories\AttendanceRepositoryInterface::class,
+            \App\Infrastructure\Repositories\AttendanceRepository::class
+        );
+        
+        $this->app->bind(
+            \App\Domain\User\Repositories\LeaveRepositoryInterface::class,
+            \App\Infrastructure\Persistence\User\Repositories\LeaveRepository::class
+        );
     }
 
     /**

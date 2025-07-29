@@ -180,4 +180,58 @@ class AttendanceController
             return ApiResponseHelper::responseApi([], 'internal_error', 500);
         }
     }
+
+    /**
+     * Admin: Get all attendance records with filters.
+     */
+    public function getAllAttendances(Request $request)
+    {
+        try {
+            $filters = [
+                'search' => $request->query('search'),
+                'status' => $request->query('status'),
+                'department' => $request->query('department'),
+                'start_date' => $request->query('start_date'),
+                'end_date' => $request->query('end_date'),
+            ];
+            
+            $attendances = $this->attendanceService->getAllAttendances($filters);
+            return ApiResponseHelper::responseApi(['attendances' => $attendances], 'all_attendances_success');
+        } catch (\Throwable $e) {
+            Log::error('AttendanceController::getAllAttendances - Error getting all attendances', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+        }
+    }
+
+    /**
+     * Admin: Get attendance statistics.
+     */
+    public function getAttendanceStats()
+    {
+        try {
+            $stats = $this->attendanceService->getAttendanceStats();
+            return ApiResponseHelper::responseApi(['stats' => $stats], 'attendance_stats_success');
+        } catch (\Throwable $e) {
+            Log::error('AttendanceController::getAttendanceStats - Error getting attendance stats', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+        }
+    }
+
+    /**
+     * Admin: Create new attendance record.
+     */
+    public function createAttendance(Request $request)
+    {
+        try {
+            $data = $request->all();
+            $attendance = $this->attendanceService->createAttendance($data);
+            return ApiResponseHelper::responseApi(['attendance' => $attendance], 'attendance_created_success', 201);
+        } catch (\Exception $e) {
+            Log::error('AttendanceController::createAttendance - Error creating attendance', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ApiResponseHelper::responseApi([], $e->getMessage(), 400);
+        } catch (\Throwable $e) {
+            Log::error('AttendanceController::createAttendance - Error creating attendance', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+        }
+    }
 }

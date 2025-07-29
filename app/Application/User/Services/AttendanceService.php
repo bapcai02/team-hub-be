@@ -139,4 +139,43 @@ class AttendanceService
     {
         return $this->attendanceRepository->getAllAttendanceByDate($date);
     }
+
+    /**
+     * Get all attendance records with filters.
+     */
+    public function getAllAttendances(array $filters = []): array
+    {
+        return $this->attendanceRepository->getAllAttendances($filters);
+    }
+
+    /**
+     * Get attendance statistics.
+     */
+    public function getAttendanceStats(): array
+    {
+        return $this->attendanceRepository->getAttendanceStats();
+    }
+
+    /**
+     * Create new attendance record.
+     */
+    public function createAttendance(array $data): Attendance
+    {
+        // Validate required fields
+        if (!isset($data['employee_id']) || !isset($data['date'])) {
+            throw new \Exception('Employee ID and date are required');
+        }
+
+        // Check if attendance already exists for this employee on this date
+        $existingAttendance = $this->attendanceRepository->getAttendanceByEmployeeAndDate(
+            $data['employee_id'], 
+            $data['date']
+        );
+        
+        if ($existingAttendance) {
+            throw new \Exception('Attendance record already exists for this employee on this date');
+        }
+
+        return $this->attendanceRepository->create($data);
+    }
 }
