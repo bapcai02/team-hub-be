@@ -16,4 +16,20 @@ class ApiResponseHelper
         if (!empty($data)) $response['data'] = $data;
         return response()->json($response, $status);
     }
+
+    public static function success($message = null, $data = [], $status = 200): JsonResponse
+    {
+        $response = ['success' => true];
+        if ($message) $response['message'] = $message;
+        if (!empty($data)) $response['data'] = $data;
+        return response()->json($response, $status);
+    }
+
+    public static function error($message = null, $data = [], $status = 400): JsonResponse
+    {
+        $response = ['success' => false];
+        if ($message) $response['message'] = $message;
+        if (!empty($data)) $response['data'] = $data;
+        return response()->json($response, $status);
+    }
 } 

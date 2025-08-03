@@ -19,6 +19,8 @@ class DatabaseSeeder extends Seeder
             LeavesTableSeeder::class,
             AttendancesTableSeeder::class,
             EmployeeEvaluationsTableSeeder::class,
+            DeviceCategorySeeder::class,
+            DeviceSeeder::class,
         ]);
     }
 }

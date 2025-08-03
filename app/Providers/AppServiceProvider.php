@@ -3,6 +3,8 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use App\Domain\Calendar\Repositories\CalendarEventRepositoryInterface;
+use App\Infrastructure\Persistence\Calendar\Repositories\CalendarEventRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -61,6 +63,9 @@ class AppServiceProvider extends ServiceProvider
             \App\Domain\User\Repositories\LeaveRepositoryInterface::class,
             \App\Infrastructure\Persistence\User\Repositories\LeaveRepository::class
         );
+
+        // Bind Calendar Repository
+        $this->app->bind(CalendarEventRepositoryInterface::class, CalendarEventRepository::class);
     }
 
     /**

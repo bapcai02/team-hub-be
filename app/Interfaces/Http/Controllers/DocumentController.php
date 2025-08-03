@@ -2,146 +2,295 @@
 
 namespace App\Interfaces\Http\Controllers;
 
+use Illuminate\Routing\Controller;
 use App\Helpers\ApiResponseHelper;
-use App\Application\Document\Services\DocumentService;
-use App\Interfaces\Http\Requests\Document\StoreDocumentRequest;
-use App\Interfaces\Http\Requests\Document\UpdateDocumentRequest;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Validator;
 
-class DocumentController
+class DocumentController extends Controller
 {
-    public function __construct(protected DocumentService $documentService) {}
-
-    /**
-     * Create a new document.
-     */
-    public function store(StoreDocumentRequest $request)
-    {
-        try {
-            $data = $request->validated();
-            $data['created_by'] = $request->user()->id;
-            
-            $document = $this->documentService->create($data);
-            return ApiResponseHelper::responseApi(['document' => $document], 'document_create_success', 201);
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::store - Error creating document', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
-        }
-    }
-
-    /**
-     * Get all documents for current user.
-     */
     public function index(Request $request)
     {
         try {
-            $userId = $request->user()->id;
-            $documents = $this->documentService->getByUserId($userId);
-            return ApiResponseHelper::responseApi(['documents' => $documents], 'document_list_success');
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::index - Error getting documents for user', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+            $user = Auth::user();
+            $documents = collect([
+                [
+                    'id' => 1,
+                    'title' => 'Project Requirements',
+                    'description' => 'Detailed project requirements document',
+                    'file_name' => 'project_requirements.pdf',
+                    'file_type' => 'pdf',
+                    'file_size' => 1024000,
+                    'category' => 'project',
+                    'status' => 'published',
+                    'user' => ['name' => $user->name],
+                    'created_at' => now()->subDays(5),
+                    'updated_at' => now()->subDays(2),
+                ],
+                [
+                    'id' => 2,
+                    'title' => 'Meeting Notes',
+                    'description' => 'Notes from team meeting',
+                    'file_name' => 'meeting_notes.docx',
+                    'file_type' => 'docx',
+                    'file_size' => 512000,
+                    'category' => 'meeting',
+                    'status' => 'draft',
+                    'user' => ['name' => $user->name],
+                    'created_at' => now()->subDays(3),
+                    'updated_at' => now()->subDays(1),
+                ],
+                [
+                    'id' => 3,
+                    'title' => 'Company Policy',
+                    'description' => 'Updated company policies',
+                    'file_name' => 'company_policy.pdf',
+                    'file_type' => 'pdf',
+                    'file_size' => 2048000,
+                    'category' => 'policy',
+                    'status' => 'published',
+                    'user' => ['name' => $user->name],
+                    'created_at' => now()->subDays(10),
+                    'updated_at' => now()->subDays(8),
+                ],
+            ]);
+
+            return ApiResponseHelper::success('documents_retrieved', $documents);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('documents_retrieval_failed', $e->getMessage());
         }
     }
 
-    /**
-     * Get document details by ID.
-     */
+    public function getStats()
+    {
+        try {
+            $stats = [
+                'total' => 3,
+                'total_size' => 3584000,
+                'recent_uploads' => 1,
+                'by_status' => [
+                    'published' => 2,
+                    'draft' => 1,
+                    'archived' => 0,
+                ],
+                'by_category' => [
+                    'project' => 1,
+                    'meeting' => 1,
+                    'policy' => 1,
+                    'template' => 0,
+                    'other' => 0,
+                ],
+            ];
+
+            return ApiResponseHelper::success('document_stats_retrieved', $stats);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_stats_retrieval_failed', $e->getMessage());
+        }
+    }
+
+    public function search(Request $request)
+    {
+        try {
+            $query = $request->get('q', '');
+            
+            // Mock search results
+            $documents = collect([
+                [
+                    'id' => 1,
+                    'title' => 'Project Requirements',
+                    'description' => 'Detailed project requirements document',
+                    'file_name' => 'project_requirements.pdf',
+                    'file_type' => 'pdf',
+                    'file_size' => 1024000,
+                    'category' => 'project',
+                    'status' => 'published',
+                    'user' => ['name' => Auth::user()->name],
+                    'created_at' => now()->subDays(5),
+                ],
+            ])->filter(function ($doc) use ($query) {
+                return stripos($doc['title'], $query) !== false || 
+                       stripos($doc['description'], $query) !== false;
+            });
+
+            return ApiResponseHelper::success('documents_search_completed', $documents);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('documents_search_failed', $e->getMessage());
+        }
+    }
+
     public function show($id)
     {
         try {
-            $document = $this->documentService->find($id);
-            if (!$document) {
-                return ApiResponseHelper::responseApi([], 'document_not_found', 404);
-            }
-            return ApiResponseHelper::responseApi(['document' => $document], 'document_get_success');
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::show - Error getting document details', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+            $document = [
+                'id' => $id,
+                'title' => 'Project Requirements',
+                'description' => 'Detailed project requirements document',
+                'file_name' => 'project_requirements.pdf',
+                'file_type' => 'pdf',
+                'file_size' => 1024000,
+                'category' => 'project',
+                'status' => 'published',
+                'user' => ['name' => Auth::user()->name],
+                'created_at' => now()->subDays(5),
+                'updated_at' => now()->subDays(2),
+            ];
+
+            return ApiResponseHelper::success('document_retrieved', $document);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_retrieval_failed', $e->getMessage());
         }
     }
 
-    /**
-     * Update document details.
-     */
-    public function update(UpdateDocumentRequest $request, $id)
+    public function store(Request $request)
     {
         try {
-            $data = $request->validated();
-            $document = $this->documentService->update($id, $data);
-            
-            if (!$document) {
-                return ApiResponseHelper::responseApi([], 'document_not_found', 404);
+            $validator = Validator::make($request->all(), [
+                'title' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'category' => 'required|string|in:project,meeting,policy,template,other',
+                'status' => 'required|string|in:draft,published,archived',
+                'file' => 'required|file|max:51200', // 50MB max
+            ]);
+
+            if ($validator->fails()) {
+                return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
             }
-            return ApiResponseHelper::responseApi(['document' => $document], 'document_update_success');
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::update - Error updating document', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+
+            $file = $request->file('file');
+            $fileName = time() . '_' . $file->getClientOriginalName();
+            
+            // Mock document creation
+            $document = [
+                'id' => rand(100, 999),
+                'title' => $request->title,
+                'description' => $request->description,
+                'file_name' => $fileName,
+                'file_type' => $file->getClientOriginalExtension(),
+                'file_size' => $file->getSize(),
+                'category' => $request->category,
+                'status' => $request->status,
+                'user' => ['name' => Auth::user()->name],
+                'created_at' => now(),
+                'updated_at' => now(),
+            ];
+
+            return ApiResponseHelper::success('document_created', $document);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_creation_failed', $e->getMessage());
         }
     }
 
-    /**
-     * Delete document.
-     */
+    public function update(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'title' => 'sometimes|required|string|max:255',
+                'description' => 'nullable|string',
+                'category' => 'sometimes|required|string|in:project,meeting,policy,template,other',
+                'status' => 'sometimes|required|string|in:draft,published,archived',
+            ]);
+
+            if ($validator->fails()) {
+                return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
+            }
+
+            // Mock document update
+            $document = [
+                'id' => $id,
+                'title' => $request->title ?? 'Updated Document',
+                'description' => $request->description,
+                'file_name' => 'project_requirements.pdf',
+                'file_type' => 'pdf',
+                'file_size' => 1024000,
+                'category' => $request->category ?? 'project',
+                'status' => $request->status ?? 'published',
+                'user' => ['name' => Auth::user()->name],
+                'created_at' => now()->subDays(5),
+                'updated_at' => now(),
+            ];
+
+            return ApiResponseHelper::success('document_updated', $document);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_update_failed', $e->getMessage());
+        }
+    }
+
     public function destroy($id)
     {
         try {
-            $success = $this->documentService->delete($id);
-            if (!$success) {
-                return ApiResponseHelper::responseApi([], 'document_not_found', 404);
+            // Mock document deletion
+            return ApiResponseHelper::success('document_deleted', ['id' => $id]);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_deletion_failed', $e->getMessage());
+        }
+    }
+
+    public function download($id)
+    {
+        try {
+            // Mock file download
+            $document = [
+                'id' => $id,
+                'file_name' => 'project_requirements.pdf',
+                'file_path' => 'documents/project_requirements.pdf',
+            ];
+
+            return ApiResponseHelper::success('document_download_ready', $document);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_download_failed', $e->getMessage());
+        }
+    }
+
+    public function addComment(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'content' => 'required|string|max:1000',
+            ]);
+
+            if ($validator->fails()) {
+                return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
             }
-            return ApiResponseHelper::responseApi([], 'document_delete_success');
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::destroy - Error deleting document', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+
+            $comment = [
+                'id' => rand(100, 999),
+                'document_id' => $id,
+                'content' => $request->content,
+                'user' => ['name' => Auth::user()->name],
+                'created_at' => now(),
+            ];
+
+            return ApiResponseHelper::success('comment_added', $comment);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('comment_addition_failed', $e->getMessage());
         }
     }
 
-    /**
-     * Get documents by visibility.
-     */
-    public function getByVisibility(Request $request)
+    public function getComments($id)
     {
         try {
-            $visibility = $request->query('visibility');
-            if (!$visibility) {
-                return ApiResponseHelper::responseApi([], 'visibility_required', 400);
-            }
-            
-            $documents = $this->documentService->getByVisibility($visibility);
-            return ApiResponseHelper::responseApi(['documents' => $documents], 'document_visibility_success');
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::getByVisibility - Error getting documents by visibility', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
-        }
-    }
+            $comments = collect([
+                [
+                    'id' => 1,
+                    'document_id' => $id,
+                    'content' => 'Great document! Very helpful for the project.',
+                    'user' => ['name' => Auth::user()->name],
+                    'created_at' => now()->subDays(2),
+                ],
+                [
+                    'id' => 2,
+                    'document_id' => $id,
+                    'content' => 'Please update the requirements section.',
+                    'user' => ['name' => Auth::user()->name],
+                    'created_at' => now()->subDays(1),
+                ],
+            ]);
 
-    /**
-     * Get root documents (no parent).
-     */
-    public function getRootDocuments()
-    {
-        try {
-            $documents = $this->documentService->getRootDocuments();
-            return ApiResponseHelper::responseApi(['documents' => $documents], 'document_root_success');
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::getRootDocuments - Error getting root documents', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
-        }
-    }
-
-    /**
-     * Get child documents of a parent.
-     */
-    public function getChildren($parentId)
-    {
-        try {
-            $documents = $this->documentService->getChildren($parentId);
-            return ApiResponseHelper::responseApi(['documents' => $documents], 'document_children_success');
-        } catch (\Throwable $e) {
-            Log::error('DocumentController::getChildren - Error getting child documents', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
-            return ApiResponseHelper::responseApi([], 'internal_error', 500);
+            return ApiResponseHelper::success('comments_retrieved', $comments);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('comments_retrieval_failed', $e->getMessage());
         }
     }
 } 
