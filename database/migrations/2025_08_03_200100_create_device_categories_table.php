@@ -24,7 +24,7 @@ return new class extends Migration
 
         // Add category_id to devices table
         Schema::table('devices', function (Blueprint $table) {
-            $table->foreignId('category_id')->nullable()->after('type')->constrained('device_categories')->onDelete('set null');
+            $table->unsignedBigInteger('category_id')->nullable()->after('type');
         });
     }
 
@@ -34,7 +34,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('devices', function (Blueprint $table) {
-            $table->dropForeign(['category_id']);
             $table->dropColumn('category_id');
         });
         

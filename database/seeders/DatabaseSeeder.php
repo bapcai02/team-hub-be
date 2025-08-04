@@ -21,6 +21,9 @@ class DatabaseSeeder extends Seeder
             EmployeeEvaluationsTableSeeder::class,
             DeviceCategorySeeder::class,
             DeviceSeeder::class,
+            SalaryComponentSeeder::class,
+            ExpenseSeeder::class,
+            PayrollsTableSeeder::class,
         ]);
     }
 }
