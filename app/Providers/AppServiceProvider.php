@@ -84,6 +84,11 @@ class AppServiceProvider extends ServiceProvider
             \App\Infrastructure\Repositories\PayrollRepository::class
         );
 
+        $this->app->bind(
+            \App\Domain\User\Repositories\AnalyticsRepositoryInterface::class,
+            \App\Infrastructure\Repositories\AnalyticsRepository::class
+        );
+
         // Bind Calendar Repository
         $this->app->bind(CalendarEventRepositoryInterface::class, CalendarEventRepository::class);
     }
