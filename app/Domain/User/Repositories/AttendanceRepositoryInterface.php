@@ -12,6 +12,8 @@ interface AttendanceRepositoryInterface
     public function delete($id): bool;
     public function getTodayAttendance(int $employeeId): ?Attendance;
     public function getAttendanceByDateRange(int $employeeId, string $startDate, string $endDate): array;
+    public function getAttendanceByDate(string $date): array;
+    public function getAttendanceByDateRangeForAll(string $startDate, string $endDate): array;
     public function getAttendanceByMonth(int $employeeId, int $month, int $year): array;
     public function getAllAttendanceByDate(string $date): array;
     

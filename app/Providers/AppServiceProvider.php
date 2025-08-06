@@ -64,6 +64,26 @@ class AppServiceProvider extends ServiceProvider
             \App\Infrastructure\Persistence\User\Repositories\LeaveRepository::class
         );
 
+        $this->app->bind(
+            \App\Domain\User\Repositories\DashboardRepositoryInterface::class,
+            \App\Infrastructure\Repositories\DashboardRepository::class
+        );
+
+        $this->app->bind(
+            \App\Domain\User\Repositories\ProjectRepositoryInterface::class,
+            \App\Infrastructure\Repositories\ProjectRepository::class
+        );
+
+        $this->app->bind(
+            \App\Domain\User\Repositories\ExpenseRepositoryInterface::class,
+            \App\Infrastructure\Repositories\ExpenseRepository::class
+        );
+
+        $this->app->bind(
+            \App\Domain\User\Repositories\PayrollRepositoryInterface::class,
+            \App\Infrastructure\Repositories\PayrollRepository::class
+        );
+
         // Bind Calendar Repository
         $this->app->bind(CalendarEventRepositoryInterface::class, CalendarEventRepository::class);
     }
