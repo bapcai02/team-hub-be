@@ -25,6 +25,7 @@ class DatabaseSeeder extends Seeder
             ExpenseSeeder::class,
             PayrollsTableSeeder::class,
             GuestsTableSeeder::class,
+            HolidaysTableSeeder::class,
         ]);
     }
 }

@@ -97,6 +97,12 @@ class AppServiceProvider extends ServiceProvider
             \App\Domain\Guest\Repositories\GuestRepositoryInterface::class,
             \App\Infrastructure\Repositories\GuestRepository::class
         );
+
+        // Bind Holiday Repository
+        $this->app->bind(
+            \App\Domain\Holiday\Repositories\HolidayRepositoryInterface::class,
+            \App\Infrastructure\Repositories\HolidayRepository::class
+        );
     }
 
     /**
