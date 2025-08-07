@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
             SalaryComponentSeeder::class,
             ExpenseSeeder::class,
             PayrollsTableSeeder::class,
+            GuestsTableSeeder::class,
         ]);
     }
 }

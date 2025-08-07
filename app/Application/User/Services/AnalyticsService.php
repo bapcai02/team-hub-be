@@ -38,7 +38,7 @@ class AnalyticsService
                 'project_analytics' => $this->getProjectAnalyticsData($startDate, $endDate),
                 'attendance_analytics' => $this->getAttendanceAnalyticsData($startDate, $endDate),
                 'trends' => $this->getTrendAnalysis($startDate, $endDate),
-                'kpis' => $this->getKPIMetrics($startDate, $endDate)
+                'kpis' => $this->buildKPIMetrics($startDate, $endDate)
             ];
         } catch (\Exception $e) {
             Log::error('AnalyticsService::getComprehensiveAnalytics - Error getting comprehensive analytics', [
@@ -210,12 +210,7 @@ class AnalyticsService
             $startDate = $this->getStartDateByPeriod($period);
             $endDate = Carbon::now();
 
-            return [
-                'employee_kpis' => $this->getEmployeeKPIs($startDate, $endDate),
-                'financial_kpis' => $this->getFinancialKPIs($startDate, $endDate),
-                'project_kpis' => $this->getProjectKPIs($startDate, $endDate),
-                'operational_kpis' => $this->getOperationalKPIs($startDate, $endDate)
-            ];
+            return $this->buildKPIMetrics($startDate, $endDate);
         } catch (\Exception $e) {
             Log::error('AnalyticsService::getKPIMetrics - Error getting KPI metrics', [
                 'error' => $e->getMessage()
@@ -368,7 +363,7 @@ class AnalyticsService
         ];
     }
 
-    private function getTrendAnalysis(Carbon $startDate, Carbon $endDate): array
+    private function buildTrendAnalysis(Carbon $startDate, Carbon $endDate): array
     {
         return [
             'employee_growth' => [
@@ -386,7 +381,7 @@ class AnalyticsService
         ];
     }
 
-    private function getKPIMetrics(Carbon $startDate, Carbon $endDate): array
+    private function buildKPIMetrics(Carbon $startDate, Carbon $endDate): array
     {
         return [
             'employee_kpis' => [

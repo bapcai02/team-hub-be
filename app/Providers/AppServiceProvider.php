@@ -91,6 +91,12 @@ class AppServiceProvider extends ServiceProvider
 
         // Bind Calendar Repository
         $this->app->bind(CalendarEventRepositoryInterface::class, CalendarEventRepository::class);
+
+        // Bind Guest Repository
+        $this->app->bind(
+            \App\Domain\Guest\Repositories\GuestRepositoryInterface::class,
+            \App\Infrastructure\Repositories\GuestRepository::class
+        );
     }
 
     /**
