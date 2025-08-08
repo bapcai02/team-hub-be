@@ -56,7 +56,7 @@ class ContractService
         try {
             $contract = new BusinessContract($data);
             $contract->contract_number = $contract->generateContractNumber();
-            $contract->created_by = auth()->user()->id;
+            $contract->created_by = auth()->id();
             $contract->save();
 
             // Create parties if provided
@@ -127,7 +127,7 @@ class ContractService
         
         $signature = new ContractSignature($signatureData);
         $signature->contract_id = $contractId;
-        $signature->signer_id = auth()->user()->id;
+        $signature->signer_id = auth()->id();
         $signature->signed_at = now();
         $signature->ip_address = request()->ip();
         $signature->user_agent = request()->userAgent();
@@ -211,7 +211,7 @@ class ContractService
 
     public function createTemplate(array $data)
     {
-        $data['created_by'] = auth()->user()->id;
+        $data['created_by'] = auth()->id();
         return ContractTemplate::create($data);
     }
 

@@ -40,6 +40,59 @@ class ContractController
     }
 
     /**
+     * Get templates
+     */
+    public function getTemplates(Request $request): JsonResponse
+    {
+        $filters = $request->only(['type', 'active']);
+        $templates = $this->contractService->getAllTemplates($filters);
+        
+        return response()->json([
+            'success' => true,
+            'data' => $templates
+        ]);
+    }
+
+    /**
+     * Create template
+     */
+    public function createTemplate(Request $request): JsonResponse
+    {
+        $template = $this->contractService->createTemplate($request->all());
+        
+        return response()->json([
+            'success' => true,
+            'data' => $template
+        ]);
+    }
+
+    /**
+     * Update template
+     */
+    public function updateTemplate(int $id, Request $request): JsonResponse
+    {
+        $template = $this->contractService->updateTemplate($id, $request->all());
+        
+        return response()->json([
+            'success' => true,
+            'data' => $template
+        ]);
+    }
+
+    /**
+     * Delete template
+     */
+    public function deleteTemplate(int $id): JsonResponse
+    {
+        $this->contractService->deleteTemplate($id);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Template deleted successfully'
+        ]);
+    }
+
+    /**
      * Create new contract
      */
     public function createContract(Request $request): JsonResponse
@@ -197,76 +250,4 @@ class ContractController
         ]);
     }
 
-    /**
-     * Get all templates
-     */
-    public function getTemplates(Request $request): JsonResponse
-    {
-        $filters = $request->only(['type', 'active']);
-        $templates = $this->contractService->getAllTemplates($filters);
-
-        return response()->json([
-            'success' => true,
-            'data' => $templates
-        ]);
-    }
-
-    /**
-     * Create template
-     */
-    public function createTemplate(Request $request): JsonResponse
-    {
-        $data = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => 'required|in:employment,service,partnership,client,vendor,other',
-            'content' => 'required|string',
-            'variables' => 'nullable|array',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $template = $this->contractService->createTemplate($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Template created successfully',
-            'data' => $template
-        ], 201);
-    }
-
-    /**
-     * Update template
-     */
-    public function updateTemplate(Request $request, int $id): JsonResponse
-    {
-        $data = $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'description' => 'nullable|string',
-            'type' => 'sometimes|required|in:employment,service,partnership,client,vendor,other',
-            'content' => 'sometimes|required|string',
-            'variables' => 'nullable|array',
-            'is_active' => 'nullable|boolean',
-        ]);
-
-        $template = $this->contractService->updateTemplate($id, $data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Template updated successfully',
-            'data' => $template
-        ]);
-    }
-
-    /**
-     * Delete template
-     */
-    public function deleteTemplate(int $id): JsonResponse
-    {
-        $this->contractService->deleteTemplate($id);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Template deleted successfully'
-        ]);
-    }
 } 
