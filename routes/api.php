@@ -7,6 +7,7 @@ use App\Interfaces\Http\Controllers\EmployeeController;
 use App\Interfaces\Http\Controllers\DepartmentController;
 use App\Interfaces\Http\Controllers\CalendarController;
 use App\Interfaces\Http\Controllers\DashboardController;
+use App\Interfaces\Http\Controllers\RBACController;
 
 $apiRouteDir = __DIR__ . '/api';
 
