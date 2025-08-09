@@ -21,8 +21,14 @@ class CalendarService
      */
     public function getEvents(int $userId, ?string $startDate = null, ?string $endDate = null): Collection
     {
-        $startDate = $startDate ? Carbon::parse($startDate) : Carbon::now()->startOfMonth();
-        $endDate = $endDate ? Carbon::parse($endDate) : Carbon::now()->endOfMonth();
+        // If no date range specified, get all events for current year
+        if (!$startDate && !$endDate) {
+            $startDate = Carbon::now()->startOfYear();
+            $endDate = Carbon::now()->endOfYear();
+        } else {
+            $startDate = $startDate ? Carbon::parse($startDate) : Carbon::now()->startOfMonth();
+            $endDate = $endDate ? Carbon::parse($endDate) : Carbon::now()->endOfMonth();
+        }
 
         return $this->calendarEventRepository->getEventsByDateRange($userId, $startDate, $endDate);
     }

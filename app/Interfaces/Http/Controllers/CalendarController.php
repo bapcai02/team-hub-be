@@ -28,10 +28,22 @@ class CalendarController extends Controller
             $endDate = $request->get('end_date');
             $userId = Auth::id();
 
+            \Log::info('Calendar getEvents', [
+                'user_id' => $userId,
+                'start_date' => $startDate,
+                'end_date' => $endDate
+            ]);
+
             $events = $this->calendarService->getEvents($userId, $startDate, $endDate);
+
+            \Log::info('Calendar events found', [
+                'count' => $events->count(),
+                'events' => $events->pluck('title', 'id')
+            ]);
 
             return ApiResponseHelper::success('calendar_events_retrieved', $events);
         } catch (\Exception $e) {
+            \Log::error('Calendar getEvents error', ['error' => $e->getMessage()]);
             return ApiResponseHelper::error('Error retrieving calendar events: ' . $e->getMessage());
         }
     }
