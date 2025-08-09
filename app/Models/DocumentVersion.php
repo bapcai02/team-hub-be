@@ -15,4 +15,15 @@ class DocumentVersion extends Model
         'created_at',
     ];
     public $timestamps = false;
+
+    // Relationships
+    public function document()
+    {
+        return $this->belongsTo(Document::class);
+    }
+
+    public function creator()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
 } 

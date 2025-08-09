@@ -4,6 +4,9 @@ namespace App\Interfaces\Http\Controllers;
 
 use Illuminate\Routing\Controller;
 use App\Helpers\ApiResponseHelper;
+use App\Services\DocumentService;
+use App\Services\DocumentVersionService;
+use App\Services\DocumentShareService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -11,51 +14,25 @@ use Illuminate\Support\Facades\Validator;
 
 class DocumentController extends Controller
 {
+    protected $documentService;
+    protected $versionService;
+    protected $shareService;
+
+    public function __construct(
+        DocumentService $documentService, 
+        DocumentVersionService $versionService,
+        DocumentShareService $shareService
+    ) {
+        $this->documentService = $documentService;
+        $this->versionService = $versionService;
+        $this->shareService = $shareService;
+    }
+
     public function index(Request $request)
     {
         try {
-            $user = Auth::user();
-            $documents = collect([
-                [
-                    'id' => 1,
-                    'title' => 'Project Requirements',
-                    'description' => 'Detailed project requirements document',
-                    'file_name' => 'project_requirements.pdf',
-                    'file_type' => 'pdf',
-                    'file_size' => 1024000,
-                    'category' => 'project',
-                    'status' => 'published',
-                    'user' => ['name' => $user->name],
-                    'created_at' => now()->subDays(5),
-                    'updated_at' => now()->subDays(2),
-                ],
-                [
-                    'id' => 2,
-                    'title' => 'Meeting Notes',
-                    'description' => 'Notes from team meeting',
-                    'file_name' => 'meeting_notes.docx',
-                    'file_type' => 'docx',
-                    'file_size' => 512000,
-                    'category' => 'meeting',
-                    'status' => 'draft',
-                    'user' => ['name' => $user->name],
-                    'created_at' => now()->subDays(3),
-                    'updated_at' => now()->subDays(1),
-                ],
-                [
-                    'id' => 3,
-                    'title' => 'Company Policy',
-                    'description' => 'Updated company policies',
-                    'file_name' => 'company_policy.pdf',
-                    'file_type' => 'pdf',
-                    'file_size' => 2048000,
-                    'category' => 'policy',
-                    'status' => 'published',
-                    'user' => ['name' => $user->name],
-                    'created_at' => now()->subDays(10),
-                    'updated_at' => now()->subDays(8),
-                ],
-            ]);
+            $filters = $request->only(['category', 'status', 'project_id', 'search']);
+            $documents = $this->documentService->getAllDocuments($filters);
 
             return ApiResponseHelper::success('documents_retrieved', $documents);
         } catch (\Exception $e) {
@@ -66,24 +43,7 @@ class DocumentController extends Controller
     public function getStats()
     {
         try {
-            $stats = [
-                'total' => 3,
-                'total_size' => 3584000,
-                'recent_uploads' => 1,
-                'by_status' => [
-                    'published' => 2,
-                    'draft' => 1,
-                    'archived' => 0,
-                ],
-                'by_category' => [
-                    'project' => 1,
-                    'meeting' => 1,
-                    'policy' => 1,
-                    'template' => 0,
-                    'other' => 0,
-                ],
-            ];
-
+            $stats = $this->documentService->getDocumentStats();
             return ApiResponseHelper::success('document_stats_retrieved', $stats);
         } catch (\Exception $e) {
             return ApiResponseHelper::error('document_stats_retrieval_failed', $e->getMessage());
@@ -93,26 +53,9 @@ class DocumentController extends Controller
     public function search(Request $request)
     {
         try {
-            $query = $request->get('q', '');
-            
-            // Mock search results
-            $documents = collect([
-                [
-                    'id' => 1,
-                    'title' => 'Project Requirements',
-                    'description' => 'Detailed project requirements document',
-                    'file_name' => 'project_requirements.pdf',
-                    'file_type' => 'pdf',
-                    'file_size' => 1024000,
-                    'category' => 'project',
-                    'status' => 'published',
-                    'user' => ['name' => Auth::user()->name],
-                    'created_at' => now()->subDays(5),
-                ],
-            ])->filter(function ($doc) use ($query) {
-                return stripos($doc['title'], $query) !== false || 
-                       stripos($doc['description'], $query) !== false;
-            });
+            $searchQuery = $request->get('q', '');
+            $filters = ['search' => $searchQuery];
+            $documents = $this->documentService->getAllDocuments($filters);
 
             return ApiResponseHelper::success('documents_search_completed', $documents);
         } catch (\Exception $e) {
@@ -123,20 +66,7 @@ class DocumentController extends Controller
     public function show($id)
     {
         try {
-            $document = [
-                'id' => $id,
-                'title' => 'Project Requirements',
-                'description' => 'Detailed project requirements document',
-                'file_name' => 'project_requirements.pdf',
-                'file_type' => 'pdf',
-                'file_size' => 1024000,
-                'category' => 'project',
-                'status' => 'published',
-                'user' => ['name' => Auth::user()->name],
-                'created_at' => now()->subDays(5),
-                'updated_at' => now()->subDays(2),
-            ];
-
+            $document = $this->documentService->getDocument($id);
             return ApiResponseHelper::success('document_retrieved', $document);
         } catch (\Exception $e) {
             return ApiResponseHelper::error('document_retrieval_failed', $e->getMessage());
@@ -151,6 +81,8 @@ class DocumentController extends Controller
                 'description' => 'nullable|string',
                 'category' => 'required|string|in:project,meeting,policy,template,other',
                 'status' => 'required|string|in:draft,published,archived',
+                'tags' => 'nullable|string',
+                'project_id' => 'nullable|integer|exists:projects,id',
                 'file' => 'required|file|max:51200', // 50MB max
             ]);
 
@@ -158,23 +90,10 @@ class DocumentController extends Controller
                 return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
             }
 
+            $data = $request->only(['title', 'description', 'category', 'status', 'tags', 'project_id']);
             $file = $request->file('file');
-            $fileName = time() . '_' . $file->getClientOriginalName();
             
-            // Mock document creation
-            $document = [
-                'id' => rand(100, 999),
-                'title' => $request->title,
-                'description' => $request->description,
-                'file_name' => $fileName,
-                'file_type' => $file->getClientOriginalExtension(),
-                'file_size' => $file->getSize(),
-                'category' => $request->category,
-                'status' => $request->status,
-                'user' => ['name' => Auth::user()->name],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ];
+            $document = $this->documentService->createDocument($data, $file);
 
             return ApiResponseHelper::success('document_created', $document);
         } catch (\Exception $e) {
@@ -190,26 +109,16 @@ class DocumentController extends Controller
                 'description' => 'nullable|string',
                 'category' => 'sometimes|required|string|in:project,meeting,policy,template,other',
                 'status' => 'sometimes|required|string|in:draft,published,archived',
+                'tags' => 'nullable|array',
+                'project_id' => 'nullable|integer|exists:projects,id',
             ]);
 
             if ($validator->fails()) {
                 return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
             }
 
-            // Mock document update
-            $document = [
-                'id' => $id,
-                'title' => $request->title ?? 'Updated Document',
-                'description' => $request->description,
-                'file_name' => 'project_requirements.pdf',
-                'file_type' => 'pdf',
-                'file_size' => 1024000,
-                'category' => $request->category ?? 'project',
-                'status' => $request->status ?? 'published',
-                'user' => ['name' => Auth::user()->name],
-                'created_at' => now()->subDays(5),
-                'updated_at' => now(),
-            ];
+            $data = $request->only(['title', 'description', 'category', 'status', 'tags', 'project_id']);
+            $document = $this->documentService->updateDocument($id, $data);
 
             return ApiResponseHelper::success('document_updated', $document);
         } catch (\Exception $e) {
@@ -220,7 +129,7 @@ class DocumentController extends Controller
     public function destroy($id)
     {
         try {
-            // Mock document deletion
+            $this->documentService->deleteDocument($id);
             return ApiResponseHelper::success('document_deleted', ['id' => $id]);
         } catch (\Exception $e) {
             return ApiResponseHelper::error('document_deletion_failed', $e->getMessage());
@@ -291,6 +200,145 @@ class DocumentController extends Controller
             return ApiResponseHelper::success('comments_retrieved', $comments);
         } catch (\Exception $e) {
             return ApiResponseHelper::error('comments_retrieval_failed', $e->getMessage());
+        }
+    }
+
+    // Document Version Management
+    public function getVersions($id)
+    {
+        try {
+            $versions = $this->versionService->getVersions($id);
+            return ApiResponseHelper::success('versions_retrieved', $versions);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('versions_retrieval_failed', $e->getMessage());
+        }
+    }
+
+    public function createVersion(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'file' => 'required|file|max:51200', // 50MB max
+                'change_log' => 'nullable|string|max:1000',
+            ]);
+
+            if ($validator->fails()) {
+                return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
+            }
+
+            $file = $request->file('file');
+            $changeLog = $request->input('change_log');
+            
+            $version = $this->versionService->createVersion($id, $file, $changeLog);
+            return ApiResponseHelper::success('version_created', $version);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('version_creation_failed', $e->getMessage());
+        }
+    }
+
+    public function deleteVersion($documentId, $versionId)
+    {
+        try {
+            $this->versionService->deleteVersion($versionId);
+            return ApiResponseHelper::success('version_deleted', ['id' => $versionId]);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('version_deletion_failed', $e->getMessage());
+        }
+    }
+
+    // Document Share Management
+    public function getSharedUsers($id)
+    {
+        try {
+            $sharedUsers = $this->shareService->getSharedUsers($id);
+            return ApiResponseHelper::success('shared_users_retrieved', $sharedUsers);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('shared_users_retrieval_failed', $e->getMessage());
+        }
+    }
+
+    public function shareDocument(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'user_ids' => 'required|array|min:1',
+                'user_ids.*' => 'integer|exists:users,id',
+                'permission' => 'required|string|in:view,edit,comment',
+                'expires_at' => 'nullable|date|after:now',
+            ]);
+
+            if ($validator->fails()) {
+                return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
+            }
+
+            $userIds = $request->input('user_ids');
+            $permission = $request->input('permission', 'view');
+            $expiresAt = $request->input('expires_at');
+
+            if (count($userIds) === 1) {
+                $share = $this->shareService->shareWithUser($id, $userIds[0], $permission, $expiresAt);
+                return ApiResponseHelper::success('document_shared', $share);
+            } else {
+                $shares = $this->shareService->shareWithMultipleUsers($id, $userIds, $permission, $expiresAt);
+                return ApiResponseHelper::success('document_shared', $shares);
+            }
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_share_failed', $e->getMessage());
+        }
+    }
+
+    public function unshareDocument(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required|integer|exists:users,id',
+            ]);
+
+            if ($validator->fails()) {
+                return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
+            }
+
+            $userId = $request->input('user_id');
+            $this->shareService->unshareWithUser($id, $userId);
+            
+            return ApiResponseHelper::success('document_unshared', ['user_id' => $userId]);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('document_unshare_failed', $e->getMessage());
+        }
+    }
+
+    public function updateSharePermission(Request $request, $id)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'user_id' => 'required|integer|exists:users,id',
+                'permission' => 'required|string|in:view,edit,comment',
+            ]);
+
+            if ($validator->fails()) {
+                return ApiResponseHelper::error('validation_failed', $validator->errors()->first());
+            }
+
+            $userId = $request->input('user_id');
+            $permission = $request->input('permission');
+            
+            $share = $this->shareService->updatePermission($id, $userId, $permission);
+            return ApiResponseHelper::success('permission_updated', $share);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('permission_update_failed', $e->getMessage());
+        }
+    }
+
+    public function searchUsers(Request $request)
+    {
+        try {
+            $query = $request->get('q', '');
+            $excludeUserIds = $request->get('exclude', []);
+            
+            $users = $this->shareService->searchUsers($query, $excludeUserIds);
+            return ApiResponseHelper::success('users_found', $users);
+        } catch (\Exception $e) {
+            return ApiResponseHelper::error('user_search_failed', $e->getMessage());
         }
     }
 } 
