@@ -1,19 +1,37 @@
 <?php
 
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
-use App\Interfaces\Http\Controllers\AttendanceController;
-use App\Interfaces\Http\Controllers\LeaveController;
-use App\Interfaces\Http\Controllers\EmployeeController;
 use App\Interfaces\Http\Controllers\DepartmentController;
-use App\Interfaces\Http\Controllers\CalendarController;
 use App\Interfaces\Http\Controllers\DashboardController;
-use App\Interfaces\Http\Controllers\RBACController;
 
 $apiRouteDir = __DIR__ . '/api';
 
 foreach (glob($apiRouteDir . '/*.php') as $file) {
     require $file;
 }
+
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+|
+| Here is where you can register API routes for your application. These
+| routes are loaded by the RouteServiceProvider and all of them will
+| be assigned to the "api" middleware group. Make something great!
+|
+*/
+
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
+    return $request->user();
+});
+
+// Include other route files
+require __DIR__.'/api/guests.php';
+require __DIR__.'/api/holidays.php';
+require __DIR__.'/api/rbac.php';
+require __DIR__.'/api/contracts.php';
+require __DIR__.'/api/notifications.php';
 
 // Dashboard routes
 Route::prefix('/dashboard')->middleware(['auth:api'])->group(function () {

@@ -5,6 +5,16 @@ namespace App\Providers;
 use Illuminate\Support\ServiceProvider;
 use App\Domain\Calendar\Repositories\CalendarEventRepositoryInterface;
 use App\Infrastructure\Persistence\Calendar\Repositories\CalendarEventRepository;
+use App\Domain\Guest\Repositories\GuestRepositoryInterface;
+use App\Infrastructure\Repositories\GuestRepository;
+use App\Domain\Holiday\Repositories\HolidayRepositoryInterface;
+use App\Infrastructure\Repositories\HolidayRepository;
+use App\Domain\Notification\Repositories\NotificationRepositoryInterface;
+use App\Domain\Notification\Repositories\NotificationPreferenceRepositoryInterface;
+use App\Domain\Notification\Repositories\NotificationTemplateRepositoryInterface;
+use App\Infrastructure\Repositories\Notification\NotificationRepository;
+use App\Infrastructure\Repositories\Notification\NotificationPreferenceRepository;
+use App\Infrastructure\Repositories\Notification\NotificationTemplateRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -93,16 +103,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(CalendarEventRepositoryInterface::class, CalendarEventRepository::class);
 
         // Bind Guest Repository
-        $this->app->bind(
-            \App\Domain\Guest\Repositories\GuestRepositoryInterface::class,
-            \App\Infrastructure\Repositories\GuestRepository::class
-        );
+        $this->app->bind(GuestRepositoryInterface::class, GuestRepository::class);
 
         // Bind Holiday Repository
-        $this->app->bind(
-            \App\Domain\Holiday\Repositories\HolidayRepositoryInterface::class,
-            \App\Infrastructure\Repositories\HolidayRepository::class
-        );
+        $this->app->bind(HolidayRepositoryInterface::class, HolidayRepository::class);
+        
+        // Notification Repository Bindings
+        $this->app->bind(NotificationRepositoryInterface::class, NotificationRepository::class);
+        $this->app->bind(NotificationPreferenceRepositoryInterface::class, NotificationPreferenceRepository::class);
+        $this->app->bind(NotificationTemplateRepositoryInterface::class, NotificationTemplateRepository::class);
     }
 
     /**
