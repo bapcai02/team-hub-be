@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('title_template');
             $table->text('message_template');
             $table->json('variables')->nullable(); // Available variables for the template
-            $table->json('channels')->default('["email", "push", "in_app"]');
+            $table->json('channels')->nullable();
             $table->string('priority')->default('normal');
             $table->boolean('is_active')->default(true);
             $table->json('metadata')->nullable(); // Additional template settings

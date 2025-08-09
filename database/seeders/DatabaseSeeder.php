@@ -30,6 +30,13 @@ class DatabaseSeeder extends Seeder
             PayrollsTableSeeder::class,
             GuestsTableSeeder::class,
             HolidaysTableSeeder::class,
+            ContractTemplatesTableSeeder::class,
+            BusinessContractsTableSeeder::class,
+            ContractPartiesTableSeeder::class,
+            ContractSignaturesTableSeeder::class,
+            NotificationTemplatesTableSeeder::class,
+            NotificationPreferencesTableSeeder::class,
+            NotificationsTableSeeder::class,
         ]);
     }
 }

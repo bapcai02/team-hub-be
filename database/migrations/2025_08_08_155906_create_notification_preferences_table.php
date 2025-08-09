@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('category'); // system, project, finance, hr, etc.
-            $table->json('channels')->default('["email", "push", "in_app"]'); // email, push, sms, in_app
+            $table->json('channels')->nullable(); // email, push, sms, in_app
             $table->json('frequency')->nullable(); // immediate, daily, weekly, never
             $table->json('quiet_hours')->nullable(); // {"start": "22:00", "end": "08:00"}
             $table->boolean('is_active')->default(true);
