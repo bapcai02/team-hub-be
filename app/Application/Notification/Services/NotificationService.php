@@ -213,7 +213,11 @@ class NotificationService
      */
     public function getUserNotifications(int $userId, array $filters = [])
     {
-        $query = Notification::whereJsonContains('recipients', $userId);
+        $query = Notification::where(function($q) use ($userId) {
+            $q->whereJsonContains('recipients', $userId)
+              ->orWhere('user_id', $userId)
+              ->orWhereNull('recipients'); // Include notifications with null recipients for now
+        });
 
         if (isset($filters['category'])) {
             $query->where('category', $filters['category']);
@@ -255,7 +259,11 @@ class NotificationService
         $query = Notification::query();
         
         if ($userId) {
-            $query->whereJsonContains('recipients', $userId);
+            $query->where(function($q) use ($userId) {
+                $q->whereJsonContains('recipients', $userId)
+                  ->orWhere('user_id', $userId)
+                  ->orWhereNull('recipients'); // Include notifications with null recipients for now
+            });
         }
 
         return [
