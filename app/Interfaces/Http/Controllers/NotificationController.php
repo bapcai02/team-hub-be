@@ -24,13 +24,31 @@ class NotificationController
      */
     public function getUserNotifications(Request $request): JsonResponse
     {
-        $filters = $request->only(['category', 'status', 'unread']);
-        $notifications = $this->notificationService->getUserNotifications(Auth::id(), $filters);
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => $notifications
-        ]);
+            $notifications = $this->notificationService->getUserNotifications($user->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notifications retrieved successfully',
+                'data' => $notifications
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving notifications: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -38,12 +56,31 @@ class NotificationController
      */
     public function markAsRead(Request $request, $id): JsonResponse
     {
-        $notification = $this->notificationService->markAsRead($id, Auth::id());
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => $notification
-        ]);
+            $result = $this->notificationService->markAsRead($id, $user->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification marked as read',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error marking notification as read: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -51,35 +88,63 @@ class NotificationController
      */
     public function markAllAsRead(Request $request): JsonResponse
     {
-        $userId = Auth::id();
-        $category = $request->get('category');
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        $query = Notification::whereJsonContains('recipients', $userId)
-            ->where('is_read', false);
-
-        if ($category) {
-            $query->where('category', $category);
+            $result = $this->notificationService->markAllAsRead($user->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'All notifications marked as read',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error marking all notifications as read: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
         }
-
-        $query->update(['is_read' => true]);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'All notifications marked as read'
-        ]);
     }
 
     /**
      * Get notification statistics
      */
-    public function getNotificationStats(): JsonResponse
+    public function getNotificationStats(Request $request): JsonResponse
     {
-        $stats = $this->notificationService->getNotificationStats(Auth::id());
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => $stats
-        ]);
+            $stats = $this->notificationService->getNotificationStats($user->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification statistics retrieved successfully',
+                'data' => $stats
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving notification statistics: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -87,25 +152,42 @@ class NotificationController
      */
     public function sendNotification(Request $request): JsonResponse
     {
-        $request->validate([
-            'title' => 'required|string|max:255',
-            'message' => 'required|string',
-            'recipients' => 'required|array',
-            'recipients.*' => 'integer|exists:users,id',
-            'type' => 'string|in:email,push,sms,in_app',
-            'priority' => 'string|in:low,normal,high,urgent',
-            'category' => 'string',
-            'action_url' => 'nullable|url',
-            'scheduled_at' => 'nullable|date',
-        ]);
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        $notification = $this->notificationService->sendNotification($request->all());
+            $validated = $request->validate([
+                'title' => 'required|string|max:255',
+                'message' => 'required|string',
+                'type' => 'required|string|in:in_app,email,push',
+                'recipient_ids' => 'required|array',
+                'recipient_ids.*' => 'integer|exists:users,id',
+                'priority' => 'nullable|string|in:low,medium,high,urgent',
+                'category' => 'nullable|string|max:100',
+                'data' => 'nullable|array'
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $notification,
-            'message' => 'Notification sent successfully'
-        ]);
+            $result = $this->notificationService->sendNotification($validated);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification sent successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error sending notification: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -113,37 +195,70 @@ class NotificationController
      */
     public function sendTemplateNotification(Request $request): JsonResponse
     {
-        $request->validate([
-            'template_name' => 'required|string',
-            'recipients' => 'required|array',
-            'recipients.*' => 'integer|exists:users,id',
-            'data' => 'array',
-        ]);
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        $notification = $this->notificationService->sendTemplateNotification(
-            $request->template_name,
-            $request->recipients,
-            $request->data ?? []
-        );
+            $validated = $request->validate([
+                'template_id' => 'required|integer|exists:notification_templates,id',
+                'recipient_ids' => 'required|array',
+                'recipient_ids.*' => 'integer|exists:users,id',
+                'data' => 'nullable|array'
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $notification,
-            'message' => 'Template notification sent successfully'
-        ]);
+            $result = $this->notificationService->sendTemplateNotification($validated);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Template notification sent successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error sending template notification: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
      * Get notification preferences
      */
-    public function getNotificationPreferences(): JsonResponse
+    public function getNotificationPreferences(Request $request): JsonResponse
     {
-        $preferences = $this->notificationService->getUserPreferences(Auth::id());
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => $preferences
-        ]);
+            $preferences = $this->notificationService->getNotificationPreferences($user->id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification preferences retrieved successfully',
+                'data' => $preferences
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving notification preferences: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -151,22 +266,37 @@ class NotificationController
      */
     public function updateNotificationPreferences(Request $request): JsonResponse
     {
-        $request->validate([
-            'category' => 'required|string',
-            'channels' => 'array',
-            'channels.*' => 'string|in:email,push,sms,in_app',
-            'frequency' => 'array',
-            'quiet_hours' => 'array',
-            'is_active' => 'boolean',
-        ]);
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        $preference = $this->notificationService->updateUserPreferences(Auth::id(), $request->all());
+            $validated = $request->validate([
+                'preferences' => 'required|array',
+                'preferences.*.type' => 'required|string|in:in_app,email,push',
+                'preferences.*.enabled' => 'required|boolean'
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $preference,
-            'message' => 'Notification preferences updated successfully'
-        ]);
+            $result = $this->notificationService->updateNotificationPreferences($user->id, $validated['preferences']);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification preferences updated successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating notification preferences: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -174,13 +304,31 @@ class NotificationController
      */
     public function getNotificationTemplates(Request $request): JsonResponse
     {
-        $filters = $request->only(['category', 'type']);
-        $templates = $this->notificationService->getNotificationTemplates($filters);
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'data' => $templates
-        ]);
+            $templates = $this->notificationService->getNotificationTemplates();
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification templates retrieved successfully',
+                'data' => $templates
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving notification templates: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -188,24 +336,39 @@ class NotificationController
      */
     public function createNotificationTemplate(Request $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|unique:notification_templates,name',
-            'category' => 'required|string',
-            'type' => 'required|string|in:email,push,sms,in_app',
-            'title_template' => 'required|string',
-            'message_template' => 'required|string',
-            'variables' => 'array',
-            'channels' => 'array',
-            'priority' => 'string|in:low,normal,high,urgent',
-        ]);
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        $template = NotificationTemplate::create($request->all());
+            $validated = $request->validate([
+                'name' => 'required|string|max:255',
+                'subject' => 'required|string|max:255',
+                'content' => 'required|string',
+                'type' => 'required|string|in:in_app,email,push',
+                'variables' => 'nullable|array'
+            ]);
 
-        return response()->json([
-            'success' => true,
-            'data' => $template,
-            'message' => 'Notification template created successfully'
-        ]);
+            $result = $this->notificationService->createNotificationTemplate($validated);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification template created successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating notification template: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
@@ -213,96 +376,155 @@ class NotificationController
      */
     public function updateNotificationTemplate(Request $request, $id): JsonResponse
     {
-        $template = NotificationTemplate::findOrFail($id);
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        $request->validate([
-            'name' => 'string|unique:notification_templates,name,' . $id,
-            'category' => 'string',
-            'type' => 'string|in:email,push,sms,in_app',
-            'title_template' => 'string',
-            'message_template' => 'string',
-            'variables' => 'array',
-            'channels' => 'array',
-            'priority' => 'string|in:low,normal,high,urgent',
-            'is_active' => 'boolean',
-        ]);
+            $validated = $request->validate([
+                'name' => 'sometimes|string|max:255',
+                'subject' => 'sometimes|string|max:255',
+                'content' => 'sometimes|string',
+                'type' => 'sometimes|string|in:in_app,email,push',
+                'variables' => 'nullable|array'
+            ]);
 
-        $template->update($request->all());
-
-        return response()->json([
-            'success' => true,
-            'data' => $template,
-            'message' => 'Notification template updated successfully'
-        ]);
+            $result = $this->notificationService->updateNotificationTemplate($id, $validated);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification template updated successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error updating notification template: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
      * Delete notification template
      */
-    public function deleteNotificationTemplate($id): JsonResponse
+    public function deleteNotificationTemplate(Request $request, $id): JsonResponse
     {
-        $template = NotificationTemplate::findOrFail($id);
-        $template->delete();
+        try {
+            $user = Auth::guard('api')->user();
+            
+            if (!$user) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unauthorized',
+                    'data' => []
+                ], 401);
+            }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Notification template deleted successfully'
-        ]);
+            $result = $this->notificationService->deleteNotificationTemplate($id);
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification template deleted successfully',
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error deleting notification template: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
      * Get notification categories
      */
-    public function getNotificationCategories(): JsonResponse
+    public function getNotificationCategories(Request $request): JsonResponse
     {
-        $categories = [
-            Notification::CATEGORY_SYSTEM => 'System',
-            Notification::CATEGORY_PROJECT => 'Project',
-            Notification::CATEGORY_FINANCE => 'Finance',
-            Notification::CATEGORY_HR => 'HR',
-            Notification::CATEGORY_DEVICE => 'Device',
-            Notification::CATEGORY_CONTRACT => 'Contract',
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $categories
-        ]);
+        try {
+            $categories = [
+                'system' => 'System',
+                'project' => 'Project',
+                'task' => 'Task',
+                'meeting' => 'Meeting',
+                'reminder' => 'Reminder',
+                'announcement' => 'Announcement',
+                'update' => 'Update',
+                'alert' => 'Alert'
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification categories retrieved successfully',
+                'data' => $categories
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving notification categories: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
      * Get notification channels
      */
-    public function getNotificationChannels(): JsonResponse
+    public function getNotificationChannels(Request $request): JsonResponse
     {
-        $channels = [
-            Notification::TYPE_EMAIL => 'Email',
-            Notification::TYPE_PUSH => 'Push Notification',
-            Notification::TYPE_SMS => 'SMS',
-            Notification::TYPE_IN_APP => 'In-App',
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $channels
-        ]);
+        try {
+            $channels = [
+                'in_app' => 'In-App',
+                'email' => 'Email',
+                'push' => 'Push Notification',
+                'sms' => 'SMS'
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification channels retrieved successfully',
+                'data' => $channels
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving notification channels: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 
     /**
      * Get notification priorities
      */
-    public function getNotificationPriorities(): JsonResponse
+    public function getNotificationPriorities(Request $request): JsonResponse
     {
-        $priorities = [
-            Notification::PRIORITY_LOW => 'Low',
-            Notification::PRIORITY_NORMAL => 'Normal',
-            Notification::PRIORITY_HIGH => 'High',
-            Notification::PRIORITY_URGENT => 'Urgent',
-        ];
-
-        return response()->json([
-            'success' => true,
-            'data' => $priorities
-        ]);
+        try {
+            $priorities = [
+                'low' => 'Low',
+                'medium' => 'Medium',
+                'high' => 'High',
+                'urgent' => 'Urgent'
+            ];
+            
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification priorities retrieved successfully',
+                'data' => $priorities
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error retrieving notification priorities: ' . $e->getMessage(),
+                'data' => []
+            ], 500);
+        }
     }
 } 

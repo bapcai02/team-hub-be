@@ -3,7 +3,7 @@
 use App\Interfaces\Http\Controllers\NotificationController;
 use Illuminate\Support\Facades\Route;
 
-Route::prefix('notifications')->group(function () {
+Route::prefix('notifications')->middleware(['auth:api'])->group(function () {
     // Get user notifications
     Route::get('/', [NotificationController::class, 'getUserNotifications']);
     

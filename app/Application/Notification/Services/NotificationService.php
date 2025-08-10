@@ -2,9 +2,9 @@
 
 namespace App\Application\Notification\Services;
 
-use App\Domain\Notification\Entities\Notification;
-use App\Domain\Notification\Entities\NotificationPreference;
-use App\Domain\Notification\Entities\NotificationTemplate;
+use App\Models\Notification;
+use App\Models\NotificationPreference;
+use App\Models\NotificationTemplate;
 use App\Domain\Notification\Repositories\NotificationRepositoryInterface;
 use App\Domain\Notification\Repositories\NotificationPreferenceRepositoryInterface;
 use App\Domain\Notification\Repositories\NotificationTemplateRepositoryInterface;
@@ -70,11 +70,11 @@ class NotificationService
         }
 
         // Validate required data
-        $template->validateData($data);
+        $this->validateTemplateData($template, $data);
 
         // Render template
-        $title = $template->renderTitle($data);
-        $message = $template->renderMessage($data);
+        $title = $this->renderTemplate($template->title_template, $data);
+        $message = $this->renderTemplate($template->message_template, $data);
 
         return $this->sendNotification([
             'type' => $template->type,
@@ -83,13 +83,36 @@ class NotificationService
             'data' => $data,
             'priority' => $template->priority,
             'recipients' => $recipients,
-            'channel' => $template->getChannels()[0] ?? 'all',
+            'channel' => $template->channels[0] ?? 'all',
             'category' => $template->category,
             'metadata' => [
                 'template_id' => $template->id,
                 'template_name' => $template->name,
             ],
         ]);
+    }
+
+    /**
+     * Validate template data
+     */
+    private function validateTemplateData(NotificationTemplate $template, array $data): void
+    {
+        foreach ($template->variables as $variable) {
+            if ($variable['required'] && !isset($data[$variable['key']])) {
+                throw new \Exception("Required variable missing: {$variable['key']}");
+            }
+        }
+    }
+
+    /**
+     * Render template with data
+     */
+    private function renderTemplate(string $template, array $data): string
+    {
+        foreach ($data as $key => $value) {
+            $template = str_replace("{{$key}}", $value, $template);
+        }
+        return $template;
     }
 
     /**
@@ -103,22 +126,18 @@ class NotificationService
             $user = User::find($userId);
             if (!$user) continue;
 
-            $preferences = $this->preferenceRepository->findByUserAndCategory($user->id, $notification->category);
+            $preferences = $this->getUserPreferences($user->id);
             
-            if (!$preferences || !$preferences->isEnabled()) {
+            // Check if user wants this type of notification
+            $categoryPreference = $preferences->where('category', $notification->category)->first();
+            
+            if (!$categoryPreference || !$categoryPreference->is_active) {
                 continue;
             }
 
-            // Check quiet hours
-            if ($preferences->isInQuietHours() && !$notification->isUrgent()) {
-                continue;
-            }
-
-            // Send through enabled channels
-            foreach ($preferences->getEnabledChannels() as $channel) {
-                if ($preferences->isChannelEnabled($channel)) {
-                    $this->sendThroughChannel($notification, $user, $channel);
-                }
+            // Send through preferred channels
+            foreach ($categoryPreference->channels as $channel) {
+                $this->sendThroughChannel($notification, $user, $channel);
             }
         }
     }
@@ -130,21 +149,19 @@ class NotificationService
     {
         try {
             switch ($channel) {
-                case Notification::TYPE_EMAIL:
+                case 'email':
                     $this->sendEmail($notification, $user);
                     break;
-                case Notification::TYPE_PUSH:
+                case 'push':
                     $this->sendPushNotification($notification, $user);
                     break;
-                case Notification::TYPE_SMS:
+                case 'sms':
                     $this->sendSMS($notification, $user);
                     break;
-                case Notification::TYPE_IN_APP:
+                case 'in_app':
                     $this->sendInAppNotification($notification, $user);
                     break;
             }
-
-            $notification->markAsSent();
         } catch (\Exception $e) {
             Log::error("Failed to send notification through {$channel}: " . $e->getMessage());
             $notification->markAsFailed($e->getMessage());
@@ -157,8 +174,8 @@ class NotificationService
     private function sendEmail(Notification $notification, User $user): void
     {
         // TODO: Implement email sending logic
-        // For now, just log the email
-        Log::info("Email sent to {$user->email}: {$notification->title}");
+        Log::info("Sending email notification to {$user->email}: {$notification->title}");
+        $notification->markAsSent();
     }
 
     /**
@@ -167,8 +184,8 @@ class NotificationService
     private function sendPushNotification(Notification $notification, User $user): void
     {
         // TODO: Implement push notification logic
-        // For now, just log the push notification
-        Log::info("Push notification sent to user {$user->id}: {$notification->title}");
+        Log::info("Sending push notification to user {$user->id}: {$notification->title}");
+        $notification->markAsSent();
     }
 
     /**
@@ -177,8 +194,8 @@ class NotificationService
     private function sendSMS(Notification $notification, User $user): void
     {
         // TODO: Implement SMS sending logic
-        // For now, just log the SMS
-        Log::info("SMS sent to user {$user->id}: {$notification->title}");
+        Log::info("Sending SMS notification to user {$user->id}: {$notification->title}");
+        $notification->markAsSent();
     }
 
     /**
@@ -186,29 +203,31 @@ class NotificationService
      */
     private function sendInAppNotification(Notification $notification, User $user): void
     {
-        // Create a copy of the notification for the specific user
-        $this->notificationRepository->create([
-            'type' => Notification::TYPE_IN_APP,
-            'title' => $notification->title,
-            'message' => $notification->message,
-            'data' => $notification->data,
-            'status' => Notification::STATUS_SENT,
-            'priority' => $notification->priority,
-            'sent_at' => now(),
-            'recipients' => [$user->id],
-            'channel' => Notification::TYPE_IN_APP,
-            'category' => $notification->category,
-            'action_url' => $notification->action_url,
-            'metadata' => $notification->metadata,
-        ]);
+        // For in-app notifications, we just mark as sent
+        Log::info("Sending in-app notification to user {$user->id}: {$notification->title}");
+        $notification->markAsSent();
     }
 
     /**
-     * Get user notifications
+     * Get user notifications with filters
      */
     public function getUserNotifications(int $userId, array $filters = [])
     {
-        return $this->notificationRepository->findByUser($userId, $filters);
+        $query = Notification::whereJsonContains('recipients', $userId);
+
+        if (isset($filters['category'])) {
+            $query->where('category', $filters['category']);
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['unread']) && $filters['unread']) {
+            $query->where('is_read', false);
+        }
+
+        return $query->orderBy('created_at', 'desc')->get();
     }
 
     /**
@@ -216,10 +235,13 @@ class NotificationService
      */
     public function markAsRead(int $notificationId, int $userId): ?Notification
     {
-        $success = $this->notificationRepository->markAsRead($notificationId, $userId);
-        
-        if ($success) {
-            return $this->notificationRepository->findById($notificationId);
+        $notification = Notification::whereJsonContains('recipients', $userId)
+            ->where('id', $notificationId)
+            ->first();
+
+        if ($notification) {
+            $notification->markAsRead();
+            return $notification;
         }
 
         return null;
@@ -230,7 +252,19 @@ class NotificationService
      */
     public function getNotificationStats(int $userId = null): array
     {
-        return $this->notificationRepository->getStats($userId);
+        $query = Notification::query();
+        
+        if ($userId) {
+            $query->whereJsonContains('recipients', $userId);
+        }
+
+        return [
+            'total' => $query->count(),
+            'sent' => $query->where('status', Notification::STATUS_SENT)->count(),
+            'pending' => $query->where('status', Notification::STATUS_PENDING)->count(),
+            'failed' => $query->where('status', Notification::STATUS_FAILED)->count(),
+            'unread' => $query->where('is_read', false)->count(),
+        ];
     }
 
     /**
@@ -238,43 +272,156 @@ class NotificationService
      */
     public function retryFailedNotifications(): int
     {
-        $failedNotifications = $this->notificationRepository->findFailed();
+        $failedNotifications = Notification::where('status', Notification::STATUS_FAILED)
+            ->where('retry_count', '<', 3)
+            ->get();
 
+        $retriedCount = 0;
         foreach ($failedNotifications as $notification) {
-            $this->processNotification($notification);
+            try {
+                $this->processNotification($notification);
+                $retriedCount++;
+            } catch (\Exception $e) {
+                Log::error("Failed to retry notification {$notification->id}: " . $e->getMessage());
+            }
         }
 
-        return $failedNotifications->count();
+        return $retriedCount;
     }
 
     /**
-     * Clean up old notifications
+     * Cleanup old notifications
      */
     public function cleanupOldNotifications(int $days = 30): int
     {
-        return $this->notificationRepository->cleanupOldNotifications($days);
+        $cutoffDate = now()->subDays($days);
+        
+        return Notification::where('created_at', '<', $cutoffDate)
+            ->where('is_read', true)
+            ->delete();
     }
 
     /**
-     * Get notification preferences for user
+     * Get user notification preferences
      */
     public function getUserPreferences(int $userId): \Illuminate\Database\Eloquent\Collection
     {
-        return $this->preferenceRepository->findByUser($userId);
+        return NotificationPreference::where('user_id', $userId)->get();
     }
 
     /**
-     * Update notification preferences
+     * Update user notification preferences
      */
     public function updateUserPreferences(int $userId, array $data): NotificationPreference
     {
-        return $this->preferenceRepository->updateOrCreate(
+        $preference = NotificationPreference::updateOrCreate(
             [
                 'user_id' => $userId,
                 'category' => $data['category'],
             ],
-            $data
+            [
+                'channels' => $data['channels'],
+                'frequency' => $data['frequency'],
+                'quiet_hours' => $data['quiet_hours'] ?? null,
+                'is_active' => $data['is_active'],
+            ]
         );
+
+        return $preference;
+    }
+
+    /**
+     * Mark all notifications as read for a user
+     */
+    public function markAllAsRead(int $userId): array
+    {
+        $updated = \App\Models\Notification::whereJsonContains('recipients', $userId)
+            ->where('is_read', false)
+            ->update(['is_read' => true]);
+
+        return [
+            'updated_count' => $updated,
+            'message' => "Marked {$updated} notifications as read"
+        ];
+    }
+
+    /**
+     * Get notification preferences for a user
+     */
+    public function getNotificationPreferences(int $userId): array
+    {
+        $preferences = \App\Models\NotificationPreference::where('user_id', $userId)->get();
+        
+        return [
+            'preferences' => $preferences,
+            'default_preferences' => [
+                'in_app' => true,
+                'email' => true,
+                'push' => false,
+                'sms' => false
+            ]
+        ];
+    }
+
+    /**
+     * Update notification preferences for a user
+     */
+    public function updateNotificationPreferences(int $userId, array $preferences): array
+    {
+        foreach ($preferences as $preference) {
+            \App\Models\NotificationPreference::updateOrCreate(
+                [
+                    'user_id' => $userId,
+                    'type' => $preference['type']
+                ],
+                [
+                    'enabled' => $preference['enabled']
+                ]
+            );
+        }
+
+        return [
+            'message' => 'Preferences updated successfully',
+            'preferences' => $this->getNotificationPreferences($userId)
+        ];
+    }
+
+    /**
+     * Create a new notification template
+     */
+    public function createNotificationTemplate(array $data): \App\Models\NotificationTemplate
+    {
+        return \App\Models\NotificationTemplate::create([
+            'name' => $data['name'],
+            'subject' => $data['subject'],
+            'content' => $data['content'],
+            'type' => $data['type'],
+            'variables' => $data['variables'] ?? []
+        ]);
+    }
+
+    /**
+     * Update an existing notification template
+     */
+    public function updateNotificationTemplate(int $id, array $data): \App\Models\NotificationTemplate
+    {
+        $template = \App\Models\NotificationTemplate::findOrFail($id);
+        $template->update($data);
+        return $template;
+    }
+
+    /**
+     * Delete a notification template
+     */
+    public function deleteNotificationTemplate(int $id): array
+    {
+        $template = \App\Models\NotificationTemplate::findOrFail($id);
+        $template->delete();
+
+        return [
+            'message' => 'Template deleted successfully',
+            'deleted_template' => $template
+        ];
     }
 
     /**
@@ -282,18 +429,16 @@ class NotificationService
      */
     public function getNotificationTemplates(array $filters = []): \Illuminate\Database\Eloquent\Collection
     {
-        if (isset($filters['category']) && isset($filters['type'])) {
-            return $this->templateRepository->findByCategoryAndType($filters['category'], $filters['type']);
+        $query = \App\Models\NotificationTemplate::query();
+
+        if (isset($filters['type'])) {
+            $query->where('type', $filters['type']);
         }
 
         if (isset($filters['category'])) {
-            return $this->templateRepository->findByCategory($filters['category']);
+            $query->where('category', $filters['category']);
         }
 
-        if (isset($filters['type'])) {
-            return $this->templateRepository->findByType($filters['type']);
-        }
-
-        return $this->templateRepository->findActive();
+        return $query->get();
     }
 } 
