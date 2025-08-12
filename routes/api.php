@@ -32,6 +32,7 @@ require __DIR__.'/api/holidays.php';
 require __DIR__.'/api/rbac.php';
 require __DIR__.'/api/contracts.php';
 require __DIR__.'/api/notifications.php';
+require __DIR__.'/api/chats.php';
 
 // Dashboard routes
 Route::prefix('/dashboard')->middleware(['auth:api'])->group(function () {
