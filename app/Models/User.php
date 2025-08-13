@@ -22,6 +22,10 @@ class User extends Authenticatable
         'role_id',
         'status',
         'last_login_at',
+        'avatar',
+        'phone',
+        'birth_date',
+        'gender',
     ];
 
     protected $hidden = [
@@ -30,11 +34,40 @@ class User extends Authenticatable
 
     protected $casts = [
         'last_login_at' => 'datetime',
+        'birth_date' => 'date',
     ];
 
     public function employee()
     {
         return $this->hasOne(Employee::class, 'user_id');
+    }
+
+    /**
+     * Get user settings
+     */
+    public function settings()
+    {
+        return $this->hasOne(UserSetting::class);
+    }
+
+    /**
+     * Get or create user settings
+     */
+    public function getOrCreateSettings()
+    {
+        if (!$this->settings) {
+            $this->settings()->create([
+                'language' => 'en',
+                'timezone' => 'UTC',
+                'theme' => 'light',
+                'layout' => 'comfortable',
+                'sidebar_collapsed' => false,
+                'two_factor_enabled' => false,
+            ]);
+            $this->refresh();
+        }
+        
+        return $this->settings;
     }
 
     /**
