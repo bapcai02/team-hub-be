@@ -34,3 +34,4 @@ require __DIR__.'/api/chats.php';
 require __DIR__.'/api/settings.php';
 require __DIR__.'/api/departments.php';
 require __DIR__.'/api/dashboard.php';
+require __DIR__.'/api/calendar.php';

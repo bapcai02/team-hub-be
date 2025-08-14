@@ -2,153 +2,120 @@
 
 namespace App\Domain\Calendar\Entities;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Carbon\Carbon;
-use App\Models\User;
+use App\Domain\User\Entities\User;
 
-class CalendarEvent extends Model
+class CalendarEvent
 {
-    protected $table = 'calendar_events';
-
-    protected $fillable = [
-        'user_id',
-        'title',
-        'description',
-        'start_time',
-        'end_time',
-        'event_type',
-        'color',
-        'is_all_day',
-        'location',
-        'status',
-    ];
-
-    protected $casts = [
-        'start_time' => 'datetime',
-        'end_time' => 'datetime',
-        'is_all_day' => 'boolean',
-    ];
-
-    protected $appends = [
-        'duration_minutes',
-        'is_upcoming',
-        'is_today',
-    ];
-
-    /**
-     * Get the user who created this event
-     */
-    public function user(): BelongsTo
-    {
-        return $this->belongsTo(User::class);
+    public function __construct(
+        public readonly ?int $id,
+        public readonly int $userId,
+        public readonly string $title,
+        public readonly ?string $description,
+        public readonly string $startTime,
+        public readonly string $endTime,
+        public readonly string $eventType,
+        public readonly string $color,
+        public readonly bool $isAllDay,
+        public readonly ?string $location,
+        public readonly string $status,
+        public readonly ?string $createdAt = null,
+        public readonly ?string $updatedAt = null,
+        public readonly ?User $user = null,
+        public readonly array $participants = [],
+    ) {
     }
 
-    /**
-     * Get participants for this event
-     */
-    public function participants(): BelongsToMany
+    public static function fromModel($model): self
     {
-        return $this->belongsToMany(User::class, 'calendar_event_participants', 'event_id', 'user_id')
-            ->withTimestamps();
+        $user = $model->user ? 
+            User::fromModel($model->user) : null;
+        
+        $participants = $model->participants ? 
+            array_map([User::class, 'fromModel'], $model->participants) : [];
+        
+        return new self(
+            id: $model->id,
+            userId: $model->user_id,
+            title: $model->title,
+            description: $model->description,
+            startTime: $model->start_time->toDateTimeString(),
+            endTime: $model->end_time->toDateTimeString(),
+            eventType: $model->event_type,
+            color: $model->color,
+            isAllDay: (bool) $model->is_all_day,
+            location: $model->location,
+            status: $model->status,
+            createdAt: $model->created_at?->toDateTimeString(),
+            updatedAt: $model->updated_at?->toDateTimeString(),
+            user: $user,
+            participants: $participants,
+        );
     }
 
-    /**
-     * Get duration in minutes
-     */
-    public function getDurationMinutesAttribute(): int
+    public function isOwnedBy(int $userId): bool
     {
-        return $this->start_time->diffInMinutes($this->end_time);
+        return $this->userId === $userId;
     }
 
-    /**
-     * Check if event is upcoming
-     */
-    public function getIsUpcomingAttribute(): bool
+    public function isUpcoming(): bool
     {
-        return $this->start_time->isAfter(Carbon::now());
+        return strtotime($this->startTime) > time();
     }
 
-    /**
-     * Check if event is today
-     */
-    public function getIsTodayAttribute(): bool
+    public function isPast(): bool
     {
-        return $this->start_time->isToday();
+        return strtotime($this->endTime) < time();
     }
 
-    /**
-     * Check if event is ongoing
-     */
     public function isOngoing(): bool
     {
-        $now = Carbon::now();
-        return $now->between($this->start_time, $this->end_time);
+        $now = time();
+        return strtotime($this->startTime) <= $now && strtotime($this->endTime) >= $now;
     }
 
-    /**
-     * Check if event is completed
-     */
     public function isCompleted(): bool
     {
-        return $this->end_time->isPast();
+        return $this->status === 'completed';
     }
 
-    /**
-     * Get event status
-     */
-    public function getStatus(): string
+    public function isCancelled(): bool
     {
-        if ($this->isOngoing()) {
-            return 'ongoing';
-        }
-        
-        if ($this->isCompleted()) {
-            return 'completed';
-        }
-        
-        return 'upcoming';
+        return $this->status === 'cancelled';
     }
 
-    /**
-     * Scope for upcoming events
-     */
-    public function scopeUpcoming($query)
+    public function getDurationMinutes(): int
     {
-        return $query->where('start_time', '>', Carbon::now());
+        return (strtotime($this->endTime) - strtotime($this->startTime)) / 60;
     }
 
-    /**
-     * Scope for today's events
-     */
-    public function scopeToday($query)
+    public function hasParticipants(): bool
     {
-        return $query->whereDate('start_time', Carbon::today());
+        return !empty($this->participants);
     }
 
-    /**
-     * Scope for this month's events
-     */
-    public function scopeThisMonth($query)
+    public function getParticipantsCount(): int
     {
-        return $query->whereMonth('start_time', Carbon::now()->month)
-                    ->whereYear('start_time', Carbon::now()->year);
+        return count($this->participants);
     }
 
-    /**
-     * Scope for events by type
-     */
-    public function scopeByType($query, string $type)
+    public function update(array $data): self
     {
-        return $query->where('event_type', $type);
-    }
-
-    /**
-     * Scope for events by date range
-     */
-    public function scopeByDateRange($query, Carbon $startDate, Carbon $endDate)
-    {
-        return $query->whereBetween('start_time', [$startDate, $endDate]);
+        return new self(
+            id: $this->id,
+            userId: $this->userId,
+            title: $data['title'] ?? $this->title,
+            description: $data['description'] ?? $this->description,
+            startTime: $data['start_time'] ?? $this->startTime,
+            endTime: $data['end_time'] ?? $this->endTime,
+            eventType: $data['event_type'] ?? $this->eventType,
+            color: $data['color'] ?? $this->color,
+            isAllDay: $data['is_all_day'] ?? $this->isAllDay,
+            location: $data['location'] ?? $this->location,
+            status: $data['status'] ?? $this->status,
+            createdAt: $this->createdAt,
+            updatedAt: now()->toDateTimeString(),
+            user: $this->user,
+            participants: $this->participants,
+        );
     }
 } 
